@@ -1,0 +1,34 @@
+type User {
+  uID: Int
+  uName: String
+}
+
+type Auth {
+  "JWT Token that can be used in future requests for Authentication"
+  authToken: String
+  "'A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
+  refreshToken: String
+  "The user that was logged in"
+  user: User
+}
+
+type Query {
+    "You need at least one query in your schema so here it is"
+    getUser(id: Int): User
+}
+
+type Mutation {
+  "Login a user. Request for an authToken and User details in response"
+  login(
+    "The username used for login. Typically a unique or email address depending on specific configuration"
+    username: String
+    "The plain-text password for the user logging in."
+    password: String
+  ): Auth
+
+  "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
+  refreshJwtAuthToken(
+      "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."
+      jwtRefreshToken: String!
+  ): Auth
+}
