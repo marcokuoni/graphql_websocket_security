@@ -1,0 +1,2 @@
+cd /srv/hpzgl_composer/public/packages/screen
+npx webpack --watch
