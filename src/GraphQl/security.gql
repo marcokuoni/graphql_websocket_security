@@ -1,0 +1,42 @@
+type User {
+  uID: Int
+  uName: String
+}
+
+type Auth {
+  "JWT Token that can be used in future requests for Authentication"
+  authToken: String
+  "'A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
+  refreshToken: String
+  "The user that was logged in"
+  user: User
+}
+
+type Query {
+    "A JWT token that can be used in future requests for authentication/authorization"
+    jwtAuthToken(user_id: Int): String
+    "A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
+    jwtRefreshToken(user_id: Int): String
+    "A unique secret tied to the users JWT token that can be revoked or refreshed. Revoking the secret prevents JWT tokens from being issued to the user. Refreshing the token invalidates previously issued tokens, but allows new tokens to be issued."
+    jwtUserSecret(user_id: Int): String
+    "The expiration for the JWT Token for the user. If not set custom for the user, it will use the default sitewide expiration setting"
+    jwtAuthExpiration: String
+    "Whether the JWT User secret has been revoked. If the secret has been revoked, auth tokens will not be issued until an admin, or user with proper capabilities re-issues a secret for the user."
+    isJwtAuthSecretRevoked(user_id: Int): Boolean!
+}
+
+type Mutation {
+  "Login a user. Request for an authToken and User details in response"
+  login(
+    "The username used for login. Typically a unique or email address depending on specific configuration"
+    username: String
+    "The plain-text password for the user logging in."
+    password: String
+  ): Auth
+
+  "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
+  refreshJwtAuthToken(
+      "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."
+      jwtRefreshToken: String!
+  ): Auth
+}
