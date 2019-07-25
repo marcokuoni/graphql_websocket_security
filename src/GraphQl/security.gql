@@ -12,26 +12,35 @@ type Auth {
   user: User
 }
 
+"The input fields for current user mutations"
+type UserMutation {
+    "If true, this will revoke the users JWT secret. If false, this will unrevoke the JWT secret AND issue a new one. To revoke, the user must have proper capabilities to edit users JWT secrets."
+    revokeJwtUserSecret: Boolean
+    "If true, this will refresh the users JWT secret."
+    refreshJwtUserSecret: Boolean
+}
+
 type Query {
+    me: User
     "A JWT token that can be used in future requests for authentication/authorization"
-    jwtAuthToken(user_id: Int): String
+    jwtAuthToken: String
     "A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
-    jwtRefreshToken(user_id: Int): String
+    jwtRefreshToken: String
     "A unique secret tied to the users JWT token that can be revoked or refreshed. Revoking the secret prevents JWT tokens from being issued to the user. Refreshing the token invalidates previously issued tokens, but allows new tokens to be issued."
-    jwtUserSecret(user_id: Int): String
+    jwtUserSecret: String
     "The expiration for the JWT Token for the user. If not set custom for the user, it will use the default sitewide expiration setting"
     jwtAuthExpiration: String
     "Whether the JWT User secret has been revoked. If the secret has been revoked, auth tokens will not be issued until an admin, or user with proper capabilities re-issues a secret for the user."
-    isJwtAuthSecretRevoked(user_id: Int): Boolean!
+    isJwtAuthSecretRevoked: Boolean!
 }
 
 type Mutation {
   "Login a user. Request for an authToken and User details in response"
   login(
     "The username used for login. Typically a unique or email address depending on specific configuration"
-    username: String
+    username: String!
     "The plain-text password for the user logging in."
-    password: String
+    password: String!
   ): Auth
 
   "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"

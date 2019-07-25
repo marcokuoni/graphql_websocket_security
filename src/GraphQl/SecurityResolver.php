@@ -11,11 +11,19 @@ class SecurityResolver
     public static function get()
     {
         $queryType = [
-            'jwtAuthToken' => function ($root, $args) {
-                $userId = (int) $args['user_id'];
-
+            'me' => function ($root, $args) {
                 $auth = App::make(\Helpers\Auth::class);
-                $user = User::getByUserID($userId);
+                $user = $auth->authenticated();
+
+                if (empty($user)) {
+                    throw new \Exception(t('The JWT token could not be returned'));
+                }
+
+                return json_decode(json_encode($user));
+            },
+            'jwtAuthToken' => function ($root, $args) {
+                $auth = App::make(\Helpers\Auth::class);
+                $user = $auth->authenticated();
                 $token = $auth->getToken($user);
 
                 if (empty($token)) {
@@ -25,10 +33,8 @@ class SecurityResolver
                 return !empty($token) ? $token : null;
             },
             'jwtRefreshToken' => function ($root, $args) {
-                $userId = (int) $args['user_id'];
-
                 $auth = App::make(\Helpers\Auth::class);
-                $user = User::getByUserID($userId);
+                $user = $auth->authenticated();
                 $token = $auth->getRefreshToken($user);
 
                 if (empty($token)) {
@@ -38,10 +44,9 @@ class SecurityResolver
                 return !empty($token) ? $token : null;
             },
             'jwtUserSecret' => function ($root, $args) {
-                $userId = (int) $args['user_id'];
-
                 $auth = App::make(\Helpers\Auth::class);
-                $secret = $auth->getUserJwtSecret($userId);
+                $user = $auth->authenticated();
+                $secret = $auth->getUserJwtSecret($user);
 
                 if (empty($secret)) {
                     throw new \Exception(t('The user secret could not be returned'));
@@ -56,13 +61,13 @@ class SecurityResolver
                 return !empty($expiration) ? $expiration : null;
             },
             'isJwtAuthSecretRevoked' => function ($root, $args) {
-                $userId = (int) $args['user_id'];
-
                 $auth = App::make(\Helpers\Auth::class);
-                $revoked = $auth->isJwtSecretRevoked($userId);
+                $user = $auth->authenticated();
+                $revoked = $auth->isJwtSecretRevoked($user);
 
                 return true == $revoked ? true : false;
             },
+
         ];
 
         $mutationType = [
@@ -79,8 +84,8 @@ class SecurityResolver
                 $auth = App::make(\Helpers\Auth::class);
                 $refreshToken = !empty($refreshToken) ? $auth->validateToken($refreshToken) : null;
 
-                $id = isset($refreshToken->data->user->id) || 0 === $refreshToken->data->user->id ?
-                    (int) $refreshToken->data->user->id : 0;
+                $id = isset($refreshToken->data->user->uID) || 0 === $refreshToken->data->user->uID ?
+                    (int) $refreshToken->data->user->uID : 0;
                 if (empty($id)) {
                     throw new \Exception(t('The provided refresh token is invalid'));
                 }

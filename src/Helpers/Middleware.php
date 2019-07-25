@@ -49,8 +49,8 @@ class Middleware implements MiddlewareInterface
 
         $validateAuthHeader = $auth->validateToken(str_ireplace('Bearer ', '', $auth->getAuthHeader()), false);
 
-        if (!empty($validateAuthHeader->data->user->id)) {
-            $user = User::getByUserID($validateAuthHeader->data->user->id);
+        if (!empty($validateAuthHeader->data->user->uID)) {
+            $user = User::getByUserID($validateAuthHeader->data->user->uID);
             $refreshToken = $auth->getRefreshToken($user, false);
         }
 

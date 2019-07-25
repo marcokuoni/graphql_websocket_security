@@ -81,6 +81,16 @@ class Auth
         return !empty($response) ? $response : [];
     }
 
+    public function authenticated()
+    {
+        $token = $this->validateToken(null, false);
+        if ($token) {
+            return User::getByUserID($token->data->user->uID);
+        }
+        throw new \Exception(t('Unauthenticated!'));
+        return false;
+    }
+
     /**
      * Get the issued time for the token
      *
@@ -123,17 +133,17 @@ class Auth
     /**
      * Given a User ID, returns the user's JWT secret
      *
-     * @param int $userId
+     * @param User $user
      *
      * @return mixed|string
      */
-    public function getUserJwtSecret($userId)
+    public function getUserJwtSecret(User $user)
     {
 
         /**
          * If the secret has been revoked, throw an error
          */
-        if (true === $this->isJwtSecretRevoked($userId)) {
+        if (true === $this->isJwtSecretRevoked($user)) {
             throw new \Exception(t('The JWT Auth secret cannot be returned'));
         }
 
@@ -141,9 +151,9 @@ class Auth
          * If the request is not from the current_user or the current_user doesn't have the proper capabilities, don't return the secret
          */
         $currentUser = App::make(User::class);
-        $isCurrentUser = ((Int)$userId === (Int)$currentUser->getUserID()) ? true : false;
+        $isCurrentUser = ((int) $user->getUserID() === (int) $currentUser->getUserID()) ? true : false;
 
-        $up = new Permissions(UserInfo::getByID((Int)$currentUser->getUserID()));
+        $up = new Permissions(UserInfo::getByID((int) $currentUser->getUserID()));
         if (!$isCurrentUser || !$up->canEditUser()) {
             throw new \Exception(t('The JWT Auth secret for this user cannot be returned'));
         }
@@ -158,7 +168,7 @@ class Auth
          * If there is no stored secret, or it's not a string
          */
         if (empty($secret) || !is_string($secret)) {
-            $secret = $this->issueNewUserSecret($userId);
+            $secret = $this->issueNewUserSecret($user);
         }
 
         /**
@@ -173,11 +183,11 @@ class Auth
     /**
      * Given a User ID, issue a new JWT Auth Secret
      *
-     * @param int $userId The ID of the user the secret is being issued for
+     * @param User $user The user the secret is being issued for
      *
      * @return string $secret The JWT User secret for the user.
      */
-    public function issueNewUserSecret($userId)
+    public function issueNewUserSecret(User $user)
     {
 
         /**
@@ -188,7 +198,7 @@ class Auth
         /**
          * If the JWT Secret is not revoked for the user, generate a new one
          */
-        if (!$this->isJwtSecretRevoked($userId)) {
+        if (!$this->isJwtSecretRevoked($user)) {
 
             /**
              * Generate a new one and store it
@@ -204,11 +214,11 @@ class Auth
     /**
      * Given a User, returns whether their JWT secret has been revoked or not.
      *
-     * @param int $userId
+     * @param User $user
      *
      * @return bool
      */
-    public function isJwtSecretRevoked($userId)
+    public function isJwtSecretRevoked(User $user)
     {
         //TODO: get user attribute graphql_jwt_auth_secret_revoked
         //$revoked = (bool) get_user_meta($userId, 'graphql_jwt_auth_secret_revoked', true);
@@ -245,16 +255,15 @@ class Auth
      * Given a user ID, if the ID is for a valid user and the current user has proper capabilities, this revokes
      * the JWT Secret from the user.
      *
-     * @param int $userId
+     * @param User $user
      *
      * @return mixed|boolean|\Exception
      */
-    public function revokeUserSecret(int $userId)
+    public function revokeUserSecret(User $user)
     {
         /**
          * If the current user can edit users, or the current user is the user being edited
          */
-        $user = User::getByUserID($userId);
         $currentUser = App::make(User::class);
         $up = new Permissions(UserInfo::getByID($user->getUserID()));
         if (0 !== $user->getUserID() && ($up->canEditUser() ||
@@ -275,17 +284,16 @@ class Auth
      * Given a user ID, if the ID is for a valid user and the current user has proper capabilities, this unrevokes
      * the JWT Secret from the user.
      *
-     * @param int $userId
+     * @param User $user
      *
      * @return mixed|boolean|\Exception
      */
-    public function unrevokeUserSecret(int $userId)
+    public function unrevokeUserSecret(User $user)
     {
 
         /**
          * If the user_id is a valid user, and the current user can edit_users
          */
-        $user = User::getByUserID($userId);
         $up = new Permissions(UserInfo::getByID($user->getUserID()));
         if (0 !== $user->getUserID() && $up->canEditUser()) {
 
@@ -293,7 +301,7 @@ class Auth
              * Issue a new user secret, invalidating any that may have previously been in place, and mark the
              * revoked meta key as false, showing that the secret has not been revoked
              */
-            $this->issueNewUserSecret($userId);
+            $this->issueNewUserSecret($user);
             //TODO: set user attribute
             //update_user_meta($userId, 'graphql_jwt_auth_secret_revoked', 0);
 
@@ -381,7 +389,7 @@ class Auth
             /**
              * So far so good, validate the user id in the token
              */
-            if (!isset($token->data->user->id)) {
+            if (!isset($token->data->user->uID)) {
                 throw new \Exception(t('User ID not found in the token'));
             }
 
@@ -389,7 +397,8 @@ class Auth
              * If there is a user_secret in the token (refresh tokens) make sure it matches what
              */
             if (isset($token->data->user->user_secret)) {
-                if ($this->isJwtSecretRevoked($token->data->user->id)) {
+                $user = User::getByUserID($token->data->user->uID);
+                if ($this->getUserJwtSecret($user) !== $token->data->user->user_secret) {
                     throw new \Exception(t('The User Secret does not match or has been revoked for this user'));
                 }
             }
@@ -544,20 +553,19 @@ class Auth
             $_SERVER['SERVER_NAME']
         );
 
+        //https://tools.ietf.org/html/rfc7519#section-4.1
         $token = [
             'iss'  => $baseUrl,
             'iat'  => $this->getTokenIssued(),
             'nbf'  => $notBefore,
             'exp'  => self::getTokenExpiration(),
             'data' => [
-                'user' => [
-                    'id' => $user->getUserID(),
-                ],
+                'user' => json_decode(json_encode($user))
             ],
         ];
 
 
-        $secret = $this->getUserJwtSecret($user->getUserID());
+        $secret = $this->getUserJwtSecret($user);
         if (!empty($secret) && true === $this->isRefreshToken()) {
             /**
              * Set the expiration date as a year from now to make the refresh token long lived, allowing the
@@ -565,7 +573,7 @@ class Auth
              * such as a refreshed user secret.
              */
             $token['exp']                         = $this->getTokenIssued() + (86400 * 365);
-            $token['data']['user']['user_secret'] = $secret;
+            $token['data']['user']->{'user_secret'} = $secret;
 
             $this->isRefreshToken = false;
         }
