@@ -5,6 +5,7 @@ namespace GraphQl;
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\User\User;
 use Exception;
+use phpDocumentor\Reflection\Types\Boolean;
 
 class SecurityResolver
 {
@@ -98,7 +99,32 @@ class SecurityResolver
                     'refreshToken' => $auth->getRefreshToken($user),
                     'user'         => json_decode(json_encode($user)),
                 ];
-            }
+            },
+            'revokeJwtUserSecret' => function ($root, $args) {
+                $uID = (int) $args['uID'];
+                $revoke = (bool) $args['revoke'];
+
+                $auth = App::make(\Helpers\Auth::class);
+                $auth->authenticated();
+
+                $user = User::getByUserID($uID);
+
+                if ($revoke) {
+                    return $auth->revokeUserSecret($user);
+                } else {
+                    return $auth->unrevokeUserSecret($user);
+                }
+            },
+            'refreshJwtUserSecret' => function ($root, $args) {
+                $uID = (int) $args['uID'];
+
+                $auth = App::make(\Helpers\Auth::class);
+                $auth->authenticated();
+
+                $user = User::getByUserID($uID);
+
+                return $auth->issueNewUserSecret($user) !== null ? true : false;
+            },
         ];
 
         $subscriptionType = [];

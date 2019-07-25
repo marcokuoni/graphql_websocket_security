@@ -12,14 +12,6 @@ type Auth {
   user: User
 }
 
-"The input fields for current user mutations"
-type UserMutation {
-    "If true, this will revoke the users JWT secret. If false, this will unrevoke the JWT secret AND issue a new one. To revoke, the user must have proper capabilities to edit users JWT secrets."
-    revokeJwtUserSecret: Boolean
-    "If true, this will refresh the users JWT secret."
-    refreshJwtUserSecret: Boolean
-}
-
 type Query {
     me: User
     "A JWT token that can be used in future requests for authentication/authorization"
@@ -48,4 +40,14 @@ type Mutation {
       "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."
       jwtRefreshToken: String!
   ): Auth
+
+  "revoke or unRevoke the token accordingly"
+  revokeJwtUserSecret(
+      uID: Int
+      "If true, this will revoke the users JWT secret. If false, this will unrevoke the JWT secret AND issue a new one. To revoke, the user must have proper capabilities to edit users JWT secrets."
+      revoke: Boolean
+  ): Boolean
+
+  "this will refresh the users JWT secret."
+  refreshJwtUserSecret(uID: Int): Boolean
 }

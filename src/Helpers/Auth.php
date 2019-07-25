@@ -584,6 +584,10 @@ class Auth
         JWT::$leeway = 60;
         $token       = JWT::encode($token, $this->getSecretKey());
 
+        if ($this->isJwtSecretRevoked($user)) {
+            throw new \Exception(t('The JWT token cannot be issued for this user'));
+        }
+
         /**
          * Return the token
          */
