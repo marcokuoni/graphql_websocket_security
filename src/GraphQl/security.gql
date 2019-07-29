@@ -1,6 +1,7 @@
 type User {
-  uID: Int
+  uID: String
   uName: String
+  anonymus: Boolean
 }
 
 type Auth {
@@ -35,6 +36,10 @@ type Mutation {
     password: String!
   ): Auth
 
+  loginAnonymus: Auth
+
+  logout: Boolean!
+
   "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
   refreshJwtAuthToken(
       "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."
@@ -43,11 +48,10 @@ type Mutation {
 
   "revoke or unRevoke the token accordingly"
   revokeJwtUserSecret(
-      uID: Int
       "If true, this will revoke the users JWT secret. If false, this will unrevoke the JWT secret AND issue a new one. To revoke, the user must have proper capabilities to edit users JWT secrets."
       revoke: Boolean
   ): Boolean
 
   "this will refresh the users JWT secret."
-  refreshJwtUserSecret(uID: Int): Boolean
+  refreshJwtUserSecret: Boolean
 }

@@ -20,36 +20,23 @@ class Api extends Controller
         Response\header('Access-Control-Allow-Origin', '*');
         Response\header('Access-Control-Allow-Headers', 'content-type');
 
-        /**
-         * If there's a Refresh-Authorization token in the request headers, validate it
-         */
-        $auth = App::make(\Helpers\Auth::class);
-        $validateRefreshHeader = $auth->validateToken($auth->getRefreshHeader(), true);
+        $authorize = App::make(\Helpers\Authorize::class);
+        $validateRefreshHeader = $authorize->validateToken($authorize->getRefreshHeader(), true);
 
-        /**
-         * If the refresh token in the request headers is valid, return a JWT Auth token that can be used for future requests
-         */
         if (!empty($validateRefreshHeader->data->user->uID)) {
+            $user = $authorize->authenticated($validateRefreshHeader);
+            $authToken = $authorize->getToken($user, false);
 
-            /**
-             * Get an auth token and refresh token to return
-             */
-            $user = User::getByUserID($validateRefreshHeader->data->user->uID);
-            $authToken = $auth->getToken($user, false);
-
-            /**
-             * If the tokens can be generated (not revoked, etc), return them
-             */
             if (!empty($authToken)) {
                 Response\header('X-JWT-Auth', $authToken);
             }
         }
 
-        $validateAuthHeader = $auth->validateToken(null, false);
+        $validateAuthHeader = $authorize->validateToken(null, false);
 
         if (!empty($validateAuthHeader->data->user->uID)) {
-            $user = User::getByUserID($validateAuthHeader->data->user->uID);
-            $refreshToken = $auth->getRefreshToken($user, false);
+            $user = $authorize->authenticated($validateAuthHeader);
+            $refreshToken = $authorize->getRefreshToken($user, false);
 
             if (!empty($refreshToken)) {
                 Response\header('X-JWT-Refresh', $refreshToken);

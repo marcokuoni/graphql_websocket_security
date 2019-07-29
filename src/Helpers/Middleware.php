@@ -31,7 +31,7 @@ class Middleware implements MiddlewareInterface
         // Get the response object from the next middleware
         $response = $frame->next($request);
 
-        $auth = App::make(\Helpers\Auth::class);
+        $authorize = App::make(\Helpers\Authroize::class);
 
         /**
          * Note: The Access-Control-Expose-Headers aren't directly filterable
@@ -47,11 +47,11 @@ class Middleware implements MiddlewareInterface
 
         $refreshToken = null;
 
-        $validateAuthHeader = $auth->validateToken(str_ireplace('Bearer ', '', $auth->getAuthHeader()), false);
+        $validateAuthHeader = $authorize->validateToken(str_ireplace('Bearer ', '', $authorize->getAuthHeader()), false);
 
         if (!empty($validateAuthHeader->data->user->uID)) {
-            $user = User::getByUserID($validateAuthHeader->data->user->uID);
-            $refreshToken = $auth->getRefreshToken($user, false);
+            $user = $authorize->authenticated($validateAuthHeader);
+            $refreshToken = $authorize->getRefreshToken($user, false);
         }
 
         if ($refreshToken) {
