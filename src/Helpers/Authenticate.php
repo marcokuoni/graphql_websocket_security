@@ -60,7 +60,7 @@ class Authenticate
             throw new \Exception($ip_service->getErrorMessage());
         }
 
-        $user = new \Helpers\User();
+        $user = new \Helpers\AnonymusUser();
 
         return !empty($user) ? $user : null;
     }

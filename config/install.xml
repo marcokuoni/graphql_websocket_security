@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <concrete5-cif version="1.0">
 
-    <themes>
-        <theme package="concrete5_graphql_websocket_sample" handle="person" />
-    </themes>
-
     <singlepages>
-        <page package="concrete5_graphql_websocket_sample" path="/person" name="Person" description="">
+        <page package="concrete5_graphql_websocket_security" path="/dashboard/system/environment/graphql_security" name="GraphQL / Websocket Security" description="Change the settings for GraphQL and the Websocket Security">
+            <attributes>
+                <attributekey handle="meta_keywords">
+                    <value>graphql, websocket, security, jwt</value>
+                </attributekey>
+            </attributes>
         </page>
     </singlepages>
 

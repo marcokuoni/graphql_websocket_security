@@ -5,9 +5,14 @@ namespace Helpers;
 use Concrete\Core\Foundation\ConcreteObject;
 use Concrete\Core\Support\Facade\Application;
 use Concrete\Core\Authentication\AuthenticationType;
+use Doctrine\ORM\EntityManagerInterface;
+use Entity\AnonymusUser as AnonymusUserEntity;
+use Concrete\Core\Localization\Localization;
+use Concrete\Core\Http\Request;
+use Concrete\Core\Permission\IPService;
 use Database;
 
-class User extends ConcreteObject
+class AnonymusUser extends ConcreteObject
 {
     public $uID = '';
     public $uName = '';
@@ -53,6 +58,7 @@ class User extends ConcreteObject
     {
         $app = Application::getFacadeApplication();
         $session = $app['session'];
+        $config = $app->make('config');
 
         if ($session->has('uID')) {
             $this->uID = $session->get('uID');
@@ -62,6 +68,31 @@ class User extends ConcreteObject
             $this->uID = uniqid('graphql_jwt_user_id');
             $this->uName = uniqid('graphql_jwt_user_id');
             $this->anonymus = true;
+
+            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+                $entityManager = $app->make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                if ($anonymusUserRepository->findOneBy(['uName' => $this->uName]) === null) {
+                    $ipService = $app->make(IPService::class);
+                    $request = $app->make(Request::class);
+                    $ip = (string) $ipService->getRequestIPAddress();
+                    $userAgent = $request->server->get('HTTP_USER_AGENT');
+
+                    $item = new AnonymusUserEntity();
+
+                    $item->setUserName($this->uName);
+                    $item->setUserLastIP($ip);
+                    $item->setUserLastAgent($userAgent);
+                    $item->setUserTimezone(date_default_timezone_get());
+                    $item->setUserDefaultLanguage(Localization::activeLocale());
+                    $entityManager->persist($item);
+                } else {
+                    throw new \Exception(t('Anonymus user already exists?'));
+                }
+                $entityManager->flush();
+                $this->uID = $item->getUserID();
+            }
 
             $session->set('uID', $this->uID);
             $session->set('uName', $this->uName);
@@ -126,7 +157,7 @@ class User extends ConcreteObject
         );
     }
 
-    private function buildHash(\Helpers\User $u, $test = 1)
+    private function buildHash($u, $test = 1)
     {
         if ($test > 10) {
             // This should only ever happen if by some stroke of divine intervention,
