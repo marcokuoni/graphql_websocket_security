@@ -5,6 +5,11 @@ namespace Concrete\Package\Concrete5GraphqlWebsocketSecurity;
 use Concrete\Core\Package\Package;
 use Concrete\Core\Database\EntityManager\Provider\StandardPackageProvider;
 use Concrete\Core\Routing\RouterInterface;
+use Concrete\Core\Attribute\Key\Category as AttributeKeyCategory;
+use Concrete\Core\Attribute\Type as AttributeType;
+use Concrete\Core\Attribute\Set as AttributeSet;
+use Concrete\Core\Attribute\Key\UserKey as UserAttributeKey;
+use Concrete\Core\Job\Job;
 
 class Controller extends Package
 {
@@ -17,11 +22,10 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '1.3.2'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '0.0.3';
+    protected $pkgVersion = '0.0.5';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';
-    protected $pkg;
     protected $pkgAutoloaderRegistries = [
         'src/GraphQl' => '\GraphQl',
         'src/Helpers' => '\Helpers',
@@ -55,12 +59,16 @@ class Controller extends Package
     {
         parent::install();
         $this->installXML();
+        $this->installUserAttributes();
+        $this->installAutomatedJobs();
     }
 
     public function upgrade()
     {
         parent::upgrade();
         $this->installXML();
+        $this->installUserAttributes();
+        $this->installAutomatedJobs();
     }
 
     private function installXML()
@@ -76,50 +84,61 @@ class Controller extends Package
         }
     }
 
+    private function installUserAttributes()
+    {
+        $pkg = Package::getByHandle($this->pkgHandle);
+        //user attributes for customers
+        $uakc = AttributeKeyCategory::getByHandle('user');
+        $uakc->setAllowAttributeSets(AttributeKeyCategory::ASET_ALLOW_MULTIPLE);
 
-    // public static function installUserAttributes(Package $package)
-    // {
-    //     //user attributes for customers
-    //     $uakc = AttributeKeyCategory::getByHandle('user');
-    //     $uakc->setAllowAttributeSets(AttributeKeyCategory::ASET_ALLOW_MULTIPLE);
+        //define attr group, and the different attribute types we'll use
+        $custSet = AttributeSet::getByHandle('graphql_jwt');
+        if (!is_object($custSet)) {
+            $custSet = $uakc->addSet('graphql_jwt', t('GraphQL / Websocket Security'), $pkg);
+        }
+        $text = AttributeType::getByHandle('text');
+        $number = AttributeType::getByHandle('number');
+        $boolean = AttributeType::getByHandle('boolean');
 
-    //     //define attr group, and the different attribute types we'll use
-    //     $custSet = AttributeSet::getByHandle('customer_info');
-    //     if (!is_object($custSet)) {
-    //         $custSet = $uakc->addSet('customer_info', t('Store Customer Info'), $pkg);
-    //     }
-    //     $text = AttributeType::getByHandle('text');
-    //     $address = AttributeType::getByHandle('address');
-    //     $dateTime = AttributeType::getByHandle('date_time');
+        $this->installUserAttribute('graphql_jwt_auth_secret', 'Authorize secret', $text, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_auth_secret_revoked', 'Authorize secret revoked', $boolean, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_token_not_before', 'Token not before', $number, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_token_expires', 'Token expires', $number, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_refresh_token_expires', 'Refresh token expires', $number, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_last_request', 'Last request', $number, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_last_request_ip', 'Last request IP', $text, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_last_request_agent', 'Last request agent', $text, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_last_request_timezone', 'Last request timezone', $text, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_last_request_language', 'Last request language', $text, $pkg, $custSet);
+        $this->installUserAttribute('graphql_jwt_request_count', 'Request count', $number, $pkg, $custSet);
+    }
 
-    //     Installer::installUserAttribute('email', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('billing_first_name', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('billing_last_name', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('billing_address', $address, $pkg, $custSet);
-    //     Installer::installUserAttribute('billing_phone', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('billing_birthdate', $dateTime, $pkg, $custSet);
-    //     Installer::installUserAttribute('shipping_first_name', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('shipping_last_name', $text, $pkg, $custSet);
-    //     Installer::installUserAttribute('shipping_address', $address, $pkg, $custSet);
-    // }
-    // public static function installUserAttribute($handle, $type, $pkg, $set, $data = null)
-    // {
-    //     $attr = UserAttributeKey::getByHandle($handle);
-    //     if (!is_object($attr)) {
-    //         $name = Core::make("helper/text")->camelcase($handle);
-    //         if (!$data) {
-    //             $data = array(
-    //                 'akHandle' => $handle,
-    //                 'akName' => t($name),
-    //                 'akIsSearchable' => false,
-    //                 'uakProfileEdit' => true,
-    //                 'uakProfileEditRequired' => false,
-    //                 'uakRegisterEdit' => false,
-    //                 'uakProfileEditRequired' => false,
-    //                 'akCheckedByDefault' => true
-    //             );
-    //         }
-    //         UserAttributeKey::add($type, $data, $pkg)->setAttributeSet($set);
-    //     }
-    // }
+    private function installUserAttribute($handle, $name, $type, $pkg, $set, $data = null)
+    {
+        $attr = UserAttributeKey::getByHandle($handle);
+        if (!is_object($attr)) {
+            if (!$data) {
+                $data = array(
+                    'akHandle' => $handle,
+                    'akName' => t($name),
+                    'akIsSearchable' => false,
+                    'uakProfileEdit' => true,
+                    'uakProfileEditRequired' => false,
+                    'uakRegisterEdit' => false,
+                    'uakProfileEditRequired' => false,
+                    'akCheckedByDefault' => true
+                );
+            }
+            UserAttributeKey::add($type, $data, $pkg)->setAttributeSet($set);
+        }
+    }
+
+    private function installAutomatedJobs()
+    {
+        $pkg = Package::getByHandle($this->pkgHandle);
+
+        if (!is_object(Job::getByHandle('remove_expired_anonymus_users'))) {
+            Job::installByPackage('remove_expired_anonymus_users', $pkg);
+        }
+    }
 }
