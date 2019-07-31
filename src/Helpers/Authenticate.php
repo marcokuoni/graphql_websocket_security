@@ -9,6 +9,8 @@ use Concrete\Core\User\Exception\UserDeactivatedException;
 use Concrete\Core\User\Exception\UserException;
 use Concrete\Core\User\Exception\UserPasswordResetException;
 use Concrete\Core\Error\UserMessageException;
+use Doctrine\ORM\EntityManagerInterface;
+use Entity\AnonymusUser as AnonymusUserEntity;
 use Core;
 use Session;
 use Database;
@@ -38,7 +40,6 @@ class Authenticate
             $user = $loginService->login($username, $password);
         } catch (UserPasswordResetException $e) {
             Session::set('uPasswordResetUserName', $username);
-            //$this->redirect('/login/', $this->getAuthenticationType()->getAuthenticationTypeHandle(), 'required_password_upgrade');
         } catch (UserException $e) {
             $this->handleFailedLogin($loginService, $username, $password, $e);
         }
@@ -79,6 +80,12 @@ class Authenticate
         $this->invalidateSession();
 
         return true;
+    }
+
+    public function getAnonymusUser($uID) {
+        $entityManager = App::make(EntityManagerInterface::class);
+        $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+        return $anonymusUserRepository->findOneBy(['uID' => $uID]);
     }
 
     protected function handleFailedLogin(LoginService $loginService, $username, $password, UserException $e)

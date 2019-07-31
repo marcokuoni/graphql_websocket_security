@@ -7,6 +7,8 @@ use GraphQL\Error\UserError;
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfo;
+use Doctrine\ORM\EntityManagerInterface;
+use Entity\AnonymusUser as AnonymusUserEntity;
 use Permissions;
 
 class Authorize
@@ -47,7 +49,7 @@ class Authorize
         }
 
         $authenticate = App::make(\Helpers\Authenticate::class);
-        $user = $authenticate->authenticateUser($username, $password, $anonymus);
+        $user = $authenticate->authenticateUser($username, $password);
 
         $response = [
             'authToken'    => $this->getSignedToken($user),
@@ -151,9 +153,6 @@ class Authorize
         $isCurrentUser = ((int) $user->getUserID() === (int) $currentUser->getUserID()) ? true : false;
 
         if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (!$isCurrentUser) {
-                throw new \Exception(t('The JWT Auth secret for this user cannot be returned'));
-            }
         } else {
             $up = new Permissions(UserInfo::getByID((int) $currentUser->getUserID()));
             if (!$isCurrentUser || !$up->canEditUser()) {
@@ -161,8 +160,23 @@ class Authorize
             }
         }
 
-        //TODO: get user attribute
-        //$secret = get_user_meta($userId, 'graphql_jwt_auth_secret', true);
+        $secret = null;
+
+        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+            if (0 !== $user->getUserID()) {
+                $entityManager = App::make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                $secret = $item->getUserGraphqlJwtAuthSecret();
+            }
+        } else {
+            if (0 !== $user->getUserID()) {
+                $userInfo = $user->getUserInfoObject();
+                $secret = $userInfo->getAttributeValue("graphql_jwt_auth_secret");
+            }
+        }
 
         if (empty($secret) || !is_string($secret)) {
             $secret = $this->issueNewUserSecret($user);
@@ -190,8 +204,26 @@ class Authorize
 
         if (!$this->isJwtSecretRevoked($user)) {
             $secret = uniqid('graphql_jwt_');
-            //TODO: set user attribute
-            //update_user_meta($userId, 'graphql_jwt_auth_secret', $secret);
+
+            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+                if (0 !== $user->getUserID()) {
+                    $entityManager = App::make(EntityManagerInterface::class);
+                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                    $item->setUserGraphqlJwtAuthSecret($secret);
+
+                    $entityManager->persist($item);
+                    $entityManager->flush();
+                }
+            } else {
+                $up = new Permissions(UserInfo::getByID($user->getUserID()));
+                if (0 !== $user->getUserID() && $up->canEditUser()) {
+                    $userInfo = $user->getUserInfoObject();
+                    $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
+                }
+            }
         }
 
         return $secret ? $secret : null;
@@ -206,9 +238,23 @@ class Authorize
      */
     public function isJwtSecretRevoked($user)
     {
-        //TODO: get user attribute graphql_jwt_auth_secret_revoked
-        //$revoked = (bool) get_user_meta($userId, 'graphql_jwt_auth_secret_revoked', true);
         $revoked = null;
+
+        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+            if (0 !== $user->getUserID()) {
+                $entityManager = App::make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                $revoked = $item->getUserGraphqlJwtAuthSecretRevoked();
+            }
+        } else {
+            if (0 !== $user->getUserID()) {
+                $userInfo = $user->getUserInfoObject();
+                $revoked = $userInfo->getAttributeValue("graphql_jwt_auth_secret_revoked");
+            }
+        }
 
         return isset($revoked) && true === $revoked ? true : false;
     }
@@ -250,9 +296,16 @@ class Authorize
         $currentUser = App::make(User::class);
 
         if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID() && $user->getUserID() === $currentUser->getUserID()) {
-                //TODO: Set user attribute
-                //update_user_meta($userId, 'graphql_jwt_auth_secret_revoked', 1);
+            if (0 !== $user->getUserID()) {
+                $entityManager = App::make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                $item->setUserGraphqlJwtAuthSecretRevoked(true);
+
+                $entityManager->persist($item);
+                $entityManager->flush();
 
                 return true;
             } else {
@@ -262,8 +315,8 @@ class Authorize
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== $user->getUserID() && ($up->canEditUser() ||
                 $user->getUserID() === $currentUser->getUserID())) {
-                //TODO: Set user attribute
-                //update_user_meta($userId, 'graphql_jwt_auth_secret_revoked', 1);
+                $userInfo = $user->getUserInfoObject();
+                $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", true);
 
                 return true;
             } else {
@@ -283,10 +336,17 @@ class Authorize
     public function unrevokeUserSecret($user)
     {
         if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== $user->getUserID()) {
-                //TODO: set user attribute
-                //update_user_meta($userId, 'graphql_jwt_auth_secret_revoked', 0);
+                $entityManager = App::make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                $item->setUserGraphqlJwtAuthSecretRevoked(false);
+
+                $entityManager->persist($item);
+                $entityManager->flush();
+
                 $this->issueNewUserSecret($user);
 
                 return true;
@@ -296,8 +356,9 @@ class Authorize
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== $user->getUserID() && $up->canEditUser()) {
-                //TODO: set user attribute
-                //update_user_meta($userId, 'graphql_jwt_auth_secret_revoked', 0);
+                $userInfo = $user->getUserInfoObject();
+                $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", false);
+
                 $this->issueNewUserSecret($user);
 
                 return true;
@@ -406,7 +467,7 @@ class Authorize
             throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
         }
 
-        $notBefore = $this->getTokenIssued(); //TODO: set from user or use issued as default: $user->authNotBefore($this->getTokenIssued());
+        $notBefore = $this->getNotBefore($user);
 
         $baseUrl = sprintf(
             "%s://%s",
@@ -436,7 +497,49 @@ class Authorize
             $token['exp']                         = $this->getTokenIssued() + (86400 * 365);
             $token['data']['user']->{'user_secret'} = $secret;
 
+            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+                if (0 !== $user->getUserID()) {
+                    $entityManager = App::make(EntityManagerInterface::class);
+                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                    $item->setUserGraphqlJwtRefreshTokenExpires($token['exp']);
+
+                    $entityManager->persist($item);
+                    $entityManager->flush();
+                }
+            } else {
+                $up = new Permissions(UserInfo::getByID($user->getUserID()));
+                if (0 !== $user->getUserID() && ($up->canEditUser() ||
+                    $user->getUserID() === $currentUser->getUserID())) {
+                    $userInfo = $user->getUserInfoObject();
+                    $userInfo->setAttribute("graphql_jwt_refresh_token_expires", $token['exp']);
+                }
+            }
+
             $this->isRefreshToken = false;
+        } else {
+            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+                if (0 !== $user->getUserID()) {
+                    $entityManager = App::make(EntityManagerInterface::class);
+                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                    $item->setUserGraphqlJwtTokenExpires($token['exp']);
+
+                    $entityManager->persist($item);
+                    $entityManager->flush();
+                }
+            } else {
+                $up = new Permissions(UserInfo::getByID($user->getUserID()));
+                if (0 !== $user->getUserID() && ($up->canEditUser() ||
+                    $user->getUserID() === $currentUser->getUserID())) {
+                    $userInfo = $user->getUserInfoObject();
+                    $userInfo->setAttribute("graphql_jwt_token_expires", $token['exp']);
+                }
+            }
         }
 
         JWT::$leeway = 60;
@@ -447,5 +550,28 @@ class Authorize
         }
 
         return !empty($token) ? $token : null;
+    }
+
+    protected function getNotBefore($user)
+    {
+        $notBefore = 0;
+
+        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
+            if (0 !== $user->getUserID()) {
+                $entityManager = App::make(EntityManagerInterface::class);
+                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+                $notBefore = $item->getUserGraphqlJwtTokenNotBefore();
+            }
+        } else {
+            if (0 !== $user->getUserID()) {
+                $userInfo = $user->getUserInfoObject();
+                $notBefore = $userInfo->getAttributeValue("graphql_jwt_token_not_before");
+            }
+        }
+
+        return $notBefore > 0 ? $notBefore : $this->getTokenIssued();
     }
 }

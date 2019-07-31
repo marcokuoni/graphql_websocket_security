@@ -60,7 +60,7 @@ class AnonymusUser extends ConcreteObject
         $session = $app['session'];
         $config = $app->make('config');
 
-        if ($session->has('uID')) {
+        if ($session->has('uID') && $session->get('anonymus')) {
             $this->uID = $session->get('uID');
             $this->uName = $session->get('uName');
             $this->anonymus = $session->get('anonymus');

@@ -7,6 +7,8 @@ use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Entity\AnonymusUser as AnonymusUserEntity;
+use Concrete\Core\Error\UserMessageException;
+use Concrete\Core\Http\ResponseFactoryInterface;
 
 class GraphqlSecurity extends DashboardPageController
 {
@@ -23,12 +25,12 @@ class GraphqlSecurity extends DashboardPageController
 
         $log_anonymus_users = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users');
         $this->set('log_anonymus_users', $log_anonymus_users);
-        if ($log_anonymus_users) {
-            $entityManager = App::make(EntityManagerInterface::class);
-            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-            $anonymusUsers = $anonymusUserRepository->findAll();
-            $this->set('anonymusUsers', $anonymusUsers);
-        }
+
+        $log_requests = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_requests');
+        $this->set('log_requests', $log_requests);
+
+        $just_with_valid_token = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token');
+        $this->set('just_with_valid_token', $just_with_valid_token);
     }
 
     public function update_entity_settings()
@@ -41,6 +43,8 @@ class GraphqlSecurity extends DashboardPageController
             if ($this->isPost()) {
                 $config = $this->app->make('config');
                 $lau = $this->post('log_anonymus_users') === 'yes';
+                $lr = $this->post('log_requests') === 'yes';
+                $jwvt = $this->post('just_with_valid_token') === 'yes';
 
                 $currentUser = App::make(User::class);
                 if ((int) $currentUser->getUserID() === 1) {
@@ -49,6 +53,8 @@ class GraphqlSecurity extends DashboardPageController
 
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_expire', (int) $this->post('auth_expire'));
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users', $lau);
+                $config->save('concrete5_graphql_websocket_security::graphql_jwt.log_requests', $lr);
+                $config->save('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token', $jwvt);
 
                 $this->flash('success', t('Settings updated.'));
                 $this->redirect('/dashboard/system/environment/graphql_security', 'view');
@@ -56,5 +62,43 @@ class GraphqlSecurity extends DashboardPageController
         } else {
             $this->set('error', [$this->token->getErrorMessage()]);
         }
+    }
+
+    public function deleteAllAnonymusUser()
+    {
+        $config = $this->app->make('config');
+
+        if (!$this->token->validate('ccm-delete-all-anonymus-user')) {
+            throw new UserMessageException($this->token->getErrorMessage());
+        }
+
+        $entityManager = App::make(EntityManagerInterface::class);
+
+        $entityManager->createQueryBuilder()
+        ->delete(AnonymusUserEntity::class)
+        ->getQuery()->execute();
+
+        $this->flash('success', t('All anonymus users are deleted'));
+
+        return $this->app->make(ResponseFactoryInterface::class)->json(true);
+    }
+
+    public function getAnonymusUserTable()
+    {
+        if (!$this->token->validate('ccm-update-anonymus-user-table')) {
+            throw new UserMessageException($this->token->getErrorMessage());
+        }
+
+        $config = $this->app->make('config');
+        $log_anonymus_users = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users');
+        $anonymusUsers = [];
+
+        if ($log_anonymus_users) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+            $anonymusUsers = $anonymusUserRepository->findAll();
+        }
+
+        return $this->app->make(ResponseFactoryInterface::class)->json($anonymusUsers);
     }
 }
