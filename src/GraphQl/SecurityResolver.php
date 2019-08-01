@@ -91,14 +91,14 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 $refreshToken = !empty($refreshToken) ? $authorize->validateToken($refreshToken) : null;
 
-                $id = isset($refreshToken->data->user->uID) || 0 === $refreshToken->data->user->uID ?
-                    (int) $refreshToken->data->user->uID : 0;
+                $id = isset($refreshToken->data->user->uID) ? $refreshToken->data->user->uID : 0;
                 if (empty($id)) {
                     throw new \Exception(t('The provided refresh token is invalid'));
                 }
 
                 if ($refreshToken->data->user->anonymus) {
-                    $user = \Helpers\User();
+                    $anonymusUser = App::make(\Helpers\AnonymusUser::class);
+                    $user =  $anonymusUser->getAnonymusUser($id);
                 } else {
                     $user = User::getByUserID($id);
                 }

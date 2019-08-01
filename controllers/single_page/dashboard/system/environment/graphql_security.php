@@ -66,18 +66,24 @@ class GraphqlSecurity extends DashboardPageController
 
     public function deleteAllAnonymusUser()
     {
-        $config = $this->app->make('config');
-
         if (!$this->token->validate('ccm-delete-all-anonymus-user')) {
             throw new UserMessageException($this->token->getErrorMessage());
         }
 
-        $entityManager = App::make(EntityManagerInterface::class);
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
 
-        $entityManager->createQueryBuilder()
-        ->delete(AnonymusUserEntity::class)
-        ->getQuery()->execute();
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
 
+            $entityManager->createQueryBuilder()
+            ->delete(AnonymusUserEntity::class)
+            ->getQuery()->execute();
+        } else {
+            $session = $app['session'];
+            $session->remove('anonymusUser');
+        }
+        
         $this->flash('success', t('All anonymus users are deleted'));
 
         return $this->app->make(ResponseFactoryInterface::class)->json(true);

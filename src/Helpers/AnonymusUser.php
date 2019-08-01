@@ -2,224 +2,275 @@
 
 namespace Helpers;
 
+use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Foundation\ConcreteObject;
 use Concrete\Core\Support\Facade\Application;
-use Concrete\Core\Authentication\AuthenticationType;
 use Doctrine\ORM\EntityManagerInterface;
 use Entity\AnonymusUser as AnonymusUserEntity;
 use Concrete\Core\Localization\Localization;
 use Concrete\Core\Http\Request;
 use Concrete\Core\Permission\IPService;
-use Database;
 
 class AnonymusUser extends ConcreteObject
 {
-    public $uID = '';
-    public $uName = '';
-    public $anonymus = true;
-
-    /**
-     * @return bool
-     */
-    public function checkLogin()
+    public function getAnonymusUser($uID = null)
     {
-        $app = Application::getFacadeApplication();
-        $session = $app['session'];
-        $config = $app['config'];
-
-        $invalidate = $app->make('Concrete\Core\Session\SessionValidatorInterface')->handleSessionValidation($session);
-        if ($invalidate) {
-            $this->loadError(USER_SESSION_EXPIRED);
-        }
-
-        if ($session->get('uID') > 0) {
-            $this->uID = $session->get('uID');
-            $this->uName = $session->get('uName');
-            $this->anonymus = $session->get('anonymus');
-
-            $checkUID = (isset($this->uID)) ? ($this->uID) : (false);
-
-            if ($checkUID == $session->get('uID')) {
-                $session->set('uOnlineCheck', time());
-                if (($session->get('uOnlineCheck') - $session->get('uLastOnline') > (ONLINE_NOW_TIMEOUT / 2))) {
-                    $session->set('uLastOnline', $session->get('uOnlineCheck'));
-                }
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    public function __construct()
-    {
-        $app = Application::getFacadeApplication();
+        $entityManager = App::make(EntityManagerInterface::class);
+        $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+        $app = App::getFacadeApplication();
         $session = $app['session'];
         $config = $app->make('config');
 
-        if ($session->has('uID') && $session->get('anonymus')) {
-            $this->uID = $session->get('uID');
-            $this->uName = $session->get('uName');
-            $this->anonymus = $session->get('anonymus');
-        } else {
-            $this->uID = uniqid('graphql_jwt_user_id');
-            $this->uName = uniqid('graphql_jwt_user_id');
-            $this->anonymus = true;
-
+        if ($uID !== null && $uID > 0) {
             if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
-                $entityManager = $app->make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                if ($anonymusUserRepository->findOneBy(['uName' => $this->uName]) === null) {
-                    $ipService = $app->make(IPService::class);
-                    $request = $app->make(Request::class);
-                    $ip = (string) $ipService->getRequestIPAddress();
-                    $userAgent = $request->server->get('HTTP_USER_AGENT');
-
-                    $item = new AnonymusUserEntity();
-
-                    $item->setUserName($this->uName);
-                    $item->setUserLastIP($ip);
-                    $item->setUserLastAgent($userAgent);
-                    $item->setUserTimezone(date_default_timezone_get());
-                    $item->setUserDefaultLanguage(Localization::activeLocale());
-                    $entityManager->persist($item);
+                return $anonymusUserRepository->findOneBy(['uID' => $uID]);
+            } else {
+                if ($session->has('anonymusUser') && $session->has('auID') && $uID == $session->get('auID')) {
+                    return $session->get('anonymusUser');
                 } else {
-                    throw new \Exception(t('Anonymus user already exists?'));
+                    return null;
                 }
-                $entityManager->flush();
-                $this->uID = $item->getUserID();
+            }
+        } else {
+            if ($session->has('auID') && $session->get('anonymus')) {
+                $uID = $session->get('auID');
+
+                if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+                    $user = $anonymusUserRepository->findOneBy(['uID' => $uID]);
+                } else {
+                    $user = $session->get('anonymusUser');
+                }
+                
+                if (!empty($user)) {
+                    return $user;
+                }
             }
 
-            $session->set('uID', $this->uID);
-            $session->set('uName', $this->uName);
-            $session->set('anonymus', $this->anonymus);
+            $uName = uniqid('graphql_jwt_user_id');
+            $ipService = $app->make(IPService::class);
+            $request = $app->make(Request::class);
+            $ip = (string) $ipService->getRequestIPAddress();
+            $userAgent = $request->server->get('HTTP_USER_AGENT');
+            $timezone = date_default_timezone_get();
+            $language = Localization::activeLocale();
+
+            $item = new AnonymusUserEntity();
+
+            $item->setUserName($uName);
+
+            $item->setUserLastIP($ip);
+            $item->setUserLastAgent($userAgent);
+            $item->setUserTimezone($timezone);
+            $item->setUserDefaultLanguage($language);
+            $entityManager->persist($item);
+
+            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+                $entityManager->flush();
+            } else {
+                $item->setUserID($uName);
+                $session->set('anonymusUser', $item);
+            }
+
+            $session->set('auID', $item->getUserID() ? $item->getUserID() : $uName);
+            $session->set('auName', $uName);
+            $session->set('anonymus', get_class($item) === AnonymusUserEntity::class);
+            $session->set('auBlockTypesSet', false);
+            $session->set('auLastOnline', time());
+            $session->set('auTimezone', $timezone);
+            $session->set('auDefaultLanguage', $language);
+            $session->set('auLastPasswordChange', false);
+            $session->set('auActive', true);
 
             $cookie = $app['cookie'];
             $cookie->set(sprintf('%s_LOGIN', $app['config']->get('concrete.session.name')), 1);
+
+            return $item;
         }
     }
 
-    public function getAnonymus()
+    public function delete($user)
     {
-        return $this->anonymus;
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+
+            $entityManager->createQueryBuilder()
+                ->delete(AnonymusUserEntity::class, 'r')
+                ->where('r.uID < :uID')
+                ->setParameter('uID', $user->getUserID())
+                ->getQuery()->execute();
+        } else {
+            $session = $app['session'];
+            $session->remove('anonymusUser');
+        }
     }
 
-    /**
-     * @return string|null
-     */
-    public function getUserName()
+    public function setSecret($user, $secret)
     {
-        return $this->uName;
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+            $item->setUserGraphqlJwtAuthSecret($secret);
+
+            $entityManager->persist($item);
+            $entityManager->flush();
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+            $item->setUserGraphqlJwtAuthSecret($secret);
+            $session->set('anonymusUser', $item);
+        }
     }
 
-    /**
-     * @return bool
-     */
-    public function isRegistered()
+    public function getSecret($user)
     {
-        return $this->getUserID() > 0;
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+        }
+
+        return $item->getUserGraphqlJwtAuthSecret();
     }
 
-    /**
-     * @return string
-     */
-    public function getUserID()
+    public function setRevoked($user, $revoked)
     {
-        return $this->uID;
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+            $item->setUserGraphqlJwtAuthSecretRevoked($revoked);
+
+            $entityManager->persist($item);
+            $entityManager->flush();
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+            $item->setUserGraphqlJwtAuthSecretRevoked($revoked);
+            $session->set('anonymusUser', $item);
+        }
     }
 
-    /**
-     * @param string $authType
-     * @throws \Exception
-     */
-    public function setAuthTypeCookie($authType)
+    public function getRevoked($user)
     {
-        $app = Application::getFacadeApplication();
-        $config = $app['config'];
-        $jar = $app['cookie'];
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
 
-        $cookie = array($this->getUserID(), $authType);
-        $at = AuthenticationType::getByHandle($authType);
-        $cookie[] = $this->buildHash($this);
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
 
-        $jar->set(
-            'ccmAuthUserHash',
-            implode(':', $cookie),
-            time() + USER_FOREVER_COOKIE_LIFETIME,
-            DIR_REL . '/',
-            $config->get('concrete.session.cookie.cookie_domain'),
-            $config->get('concrete.session.cookie.cookie_secure'),
-            $config->get('concrete.session.cookie.cookie_httponly')
-        );
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+        }
+
+        return $item->getUserGraphqlJwtAuthSecretRevoked();
     }
 
-    private function buildHash($u, $test = 1)
+    public function setTokenExpires($user, $expires)
     {
-        if ($test > 10) {
-            // This should only ever happen if by some stroke of divine intervention,
-            // we end up pulling 10 hashes that already exist. the chances of this are very very low.
-            throw new \Exception(t('There was a database error, try again.'));
-        }
-        $db = Database::connection();
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
 
-        $validThrough = strtotime('+2 weeks');
-        $token = $this->genString();
-        try {
-            $db->executeQuery(
-                'INSERT INTO authTypeConcreteCookieMap (token, uID, validThrough) VALUES (?,?,?)',
-                [$token, $u->getUserID(), $validThrough]
-            );
-        } catch (\Exception $e) {
-            // HOLY CRAP.. SERIOUSLY?
-            $this->buildHash($u, ++$test);
-        }
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
 
-        return $token;
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+            $item->setUserGraphqlJwtTokenExpires($expires);
+
+            $entityManager->persist($item);
+            $entityManager->flush();
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+            $item->setUserGraphqlJwtRefreshTokenExpires($expires);
+            $session->set('anonymusUser', $item);
+        }
     }
 
-    private function genString($a = 16)
+    public function setRefreshTokenExpires($user, $expires)
     {
-        if (function_exists('random_bytes')) { // PHP7+
-            return bin2hex(random_bytes($a));
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+            $item->setUserGraphqlJwtRefreshTokenExpires($expires);
+
+            $entityManager->persist($item);
+            $entityManager->flush();
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
+            $item->setUserGraphqlJwtRefreshTokenExpires($expires);
+            $session->set('anonymusUser', $item);
         }
-        if (function_exists('mcrypt_create_iv')) {
-            // Use /dev/urandom if available, otherwise fall back to PHP's rand (below)
-            // Don't use (MCRYPT_DEV_URANDOM|MCRYPT_RAND) here, because we prefer
-            // openssl first.
-            // Use @ here because otherwise mcrypt throws a noisy warning if
-            // /dev/urandom is missing.
-            $iv = @mcrypt_create_iv($a, MCRYPT_DEV_URANDOM);
-            if ($iv !== false) {
-                return bin2hex($iv);
-            }
-        }
-        // don't use elseif, we need the fallthrough here.
-        if (function_exists('openssl_random_pseudo_bytes')) {
-            $iv = openssl_random_pseudo_bytes($a, $crypto_strong);
-            if ($iv !== false && $crypto_strong) {
-                return bin2hex($iv);
-            }
-        }
-        // this means we've not yet returned, so MCRYPT_DEV_URANDOM isn't available.
-        if (function_exists('mcrypt_create_iv')) {
-            // terrible, but still better than what we're doing below
-            $iv = mcrypt_create_iv($a, MCRYPT_RAND);
-            if ($iv !== false) {
-                return bin2hex($iv);
-            }
-        }
-        // This really is a last resort.
-        $o = '';
-        $chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+{}|":<>?\'\\';
-        $l = strlen($chars);
-        while ($a--) {
-            $o .= substr($chars, rand(0, $l), 1);
+    }
+
+    public function getNotBefore($user)
+    {
+        $app = App::getFacadeApplication();
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+        } else {
+            $session = $app['session'];
+            $item = $session->get('anonymusUser');
         }
 
-        return md5($o);
+        return $item->getUserGraphqlJwtTokenNotBefore();
+    }
+
+    public function logRequest($user, $currentTime, $ip, $userAgent, $timezone, $language)
+    {
+        $config = App::make('config');
+
+        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
+            $entityManager = App::make(EntityManagerInterface::class);
+            $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
+
+            $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
+
+            $item->setUserGraphqlJwtLastRequest($currentTime);
+            $item->setUserGraphqlJwtLastRequestIp($ip);
+            $item->setUserGraphqlJwtLastRequestAgent($userAgent);
+            $item->setUserGraphqlJwtLastRequestTimezone($timezone);
+            $item->setUserGraphqlJwtLastRequestLanguage($language);
+            $item->setUserGraphqlJwtRequestCount($item->getUserGraphqlJwtRequestCount() > 0 ? ($item->getUserGraphqlJwtRequestCount() + 1) : 1);
+            $entityManager->persist($item);
+            $entityManager->flush();
+        }
     }
 }

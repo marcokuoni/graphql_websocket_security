@@ -5,11 +5,7 @@ namespace Helpers;
 use Firebase\JWT\JWT;
 use GraphQL\Error\UserError;
 use Concrete\Core\Support\Facade\Application as App;
-use Concrete\Core\User\User;
-use Concrete\Core\User\UserInfo;
-use Doctrine\ORM\EntityManagerInterface;
 use Entity\AnonymusUser as AnonymusUserEntity;
-use Permissions;
 
 class Authorize
 {
@@ -90,12 +86,8 @@ class Authorize
             $token = $this->validateToken(null, false);
         }
         if ($token) {
-            if ($token->data->user->anonymus) {
-                $authenticate = App::make(\Helpers\Authenticate::class);
-                return $authenticate->getAnonymusUser($token->data->user->uID);
-            } else {
-                return User::getByUserID($token->data->user->uID);
-            }
+            $authenticate = App::make(\Helpers\Authenticate::class);
+            return $authenticate->getUserByToken($token);
         }
         throw new \Exception(t('Unauthenticated!'));
         return false;
@@ -139,44 +131,23 @@ class Authorize
     /**
      * Given a User ID, returns the user's JWT secret
      *
-     * @param User $user
+     * @param User|AnonymusUser $user
      *
      * @return mixed|string
      */
     public function getUserJwtSecret($user)
     {
-        if (true === $this->isJwtSecretRevoked($user)) {
-            throw new \Exception(t('The JWT Auth secret cannot be returned'));
-        }
+        $authenticate = App::make(\Helpers\Authenticate::class);
 
-        $currentUser = App::make(User::class);
-        $isCurrentUser = ((int) $user->getUserID() === (int) $currentUser->getUserID()) ? true : false;
-
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-        } else {
-            $up = new Permissions(UserInfo::getByID((int) $currentUser->getUserID()));
-            if (!$isCurrentUser || !$up->canEditUser()) {
-                throw new \Exception(t('The JWT Auth secret for this user cannot be returned'));
+        $currentUser = $authenticate->getCurrentUser();
+        if ($currentUser->getUserID() !== $user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
+            $config = App::make('config');
+            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users') || (get_class($currentUser) !== AnonymusUserEntity::class)) {
+                throw new \Exception(t('The JWT Auth secret cannot be returned'));
             }
         }
 
-        $secret = null;
-
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID()) {
-                $entityManager = App::make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                $secret = $item->getUserGraphqlJwtAuthSecret();
-            }
-        } else {
-            if (0 !== $user->getUserID()) {
-                $userInfo = $user->getUserInfoObject();
-                $secret = $userInfo->getAttributeValue("graphql_jwt_auth_secret");
-            }
-        }
+        $secret = $authenticate->getSecret($user);
 
         if (empty($secret) || !is_string($secret)) {
             $secret = $this->issueNewUserSecret($user);
@@ -194,7 +165,7 @@ class Authorize
     /**
      * Given a User ID, issue a new JWT Auth Secret
      *
-     * @param User $user The user the secret is being issued for
+     * @param User|AnonymusUser $user The user the secret is being issued for
      *
      * @return string $secret The JWT User secret for the user.
      */
@@ -205,25 +176,8 @@ class Authorize
         if (!$this->isJwtSecretRevoked($user)) {
             $secret = uniqid('graphql_jwt_');
 
-            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-                if (0 !== $user->getUserID()) {
-                    $entityManager = App::make(EntityManagerInterface::class);
-                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                    $item->setUserGraphqlJwtAuthSecret($secret);
-
-                    $entityManager->persist($item);
-                    $entityManager->flush();
-                }
-            } else {
-                $up = new Permissions(UserInfo::getByID($user->getUserID()));
-                if (0 !== $user->getUserID() && $up->canEditUser()) {
-                    $userInfo = $user->getUserInfoObject();
-                    $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
-                }
-            }
+            $authenticate = App::make(\Helpers\Authenticate::class);
+            $authenticate->setSecret($user, $secret);
         }
 
         return $secret ? $secret : null;
@@ -232,31 +186,14 @@ class Authorize
     /**
      * Given a User, returns whether their JWT secret has been revoked or not.
      *
-     * @param User $user
+     * @param User|AnonymusUser $user
      *
      * @return bool
      */
     public function isJwtSecretRevoked($user)
     {
-        $revoked = null;
-
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID()) {
-                $entityManager = App::make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                $revoked = $item->getUserGraphqlJwtAuthSecretRevoked();
-            }
-        } else {
-            if (0 !== $user->getUserID()) {
-                $userInfo = $user->getUserInfoObject();
-                $revoked = $userInfo->getAttributeValue("graphql_jwt_auth_secret_revoked");
-            }
-        }
-
-        return isset($revoked) && true === $revoked ? true : false;
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        return $authenticate->getRevoked($user);
     }
 
     /**
@@ -287,85 +224,28 @@ class Authorize
      * Given a user ID, if the ID is for a valid user and the current user has proper capabilities, this revokes
      * the JWT Secret from the user.
      *
-     * @param User $user
+     * @param User|AnonymusUser $user
      *
      * @return mixed|boolean|\Exception
      */
     public function revokeUserSecret($user)
     {
-        $currentUser = App::make(User::class);
-
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID()) {
-                $entityManager = App::make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                $item->setUserGraphqlJwtAuthSecretRevoked(true);
-
-                $entityManager->persist($item);
-                $entityManager->flush();
-
-                return true;
-            } else {
-                throw new \Exception(t('The JWT Auth Secret cannot be revoked for this user'));
-            }
-        } else {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== $user->getUserID() && ($up->canEditUser() ||
-                $user->getUserID() === $currentUser->getUserID())) {
-                $userInfo = $user->getUserInfoObject();
-                $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", true);
-
-                return true;
-            } else {
-                throw new \Exception(t('The JWT Auth Secret cannot be revoked for this user'));
-            }
-        }
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        return $authenticate->setRevoked($user, true);
     }
 
     /**
      * Given a user ID, if the ID is for a valid user and the current user has proper capabilities, this unrevokes
      * the JWT Secret from the user.
      *
-     * @param User $user
+     * @param User|AnonymusUser $user
      *
      * @return mixed|boolean|\Exception
      */
     public function unrevokeUserSecret($user)
     {
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID()) {
-                $entityManager = App::make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                $item->setUserGraphqlJwtAuthSecretRevoked(false);
-
-                $entityManager->persist($item);
-                $entityManager->flush();
-
-                $this->issueNewUserSecret($user);
-
-                return true;
-            } else {
-                throw new \Exception(t('The JWT Auth Secret cannot be unrevoked for this user'));
-            }
-        } else {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== $user->getUserID() && $up->canEditUser()) {
-                $userInfo = $user->getUserInfoObject();
-                $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", false);
-
-                $this->issueNewUserSecret($user);
-
-                return true;
-            } else {
-                throw new \Exception(t('The JWT Auth Secret cannot be unrevoked for this user'));
-            }
-        }
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        return $authenticate->setRevoked($user, false);
     }
 
     /**
@@ -416,11 +296,9 @@ class Authorize
             }
 
             if (isset($token->data->user->user_secret)) {
-                if ($token->data->user->anonymus) {
-                    $user = \Helpers\User();
-                } else {
-                    $user = User::getByUserID($token->data->user->uID);
-                }
+                $authenticate = App::make(\Helpers\Authenticate::class);
+                $user = $authenticate->getUserByToken($token);
+
                 if ($this->getUserJwtSecret($user) !== $token->data->user->user_secret) {
                     throw new \Exception(t('The User Secret does not match or has been revoked for this user'));
                 }
@@ -462,9 +340,13 @@ class Authorize
      */
     protected function getSignedToken($user, $capCheck = true)
     {
-        $currentUser = App::make(User::class);
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        $currentUser = $authenticate->getCurrentUser();
         if (true === $capCheck && $currentUser->getUserID() !== $user->getUserID() || 0 === $user->getUserID()) {
-            throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
+            $config = App::make('config');
+            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users') || (get_class($currentUser) !== AnonymusUserEntity::class)) {
+                throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
+            }
         }
 
         $notBefore = $this->getNotBefore($user);
@@ -497,49 +379,11 @@ class Authorize
             $token['exp']                         = $this->getTokenIssued() + (86400 * 365);
             $token['data']['user']->{'user_secret'} = $secret;
 
-            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-                if (0 !== $user->getUserID()) {
-                    $entityManager = App::make(EntityManagerInterface::class);
-                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                    $item->setUserGraphqlJwtRefreshTokenExpires($token['exp']);
-
-                    $entityManager->persist($item);
-                    $entityManager->flush();
-                }
-            } else {
-                $up = new Permissions(UserInfo::getByID($user->getUserID()));
-                if (0 !== $user->getUserID() && ($up->canEditUser() ||
-                    $user->getUserID() === $currentUser->getUserID())) {
-                    $userInfo = $user->getUserInfoObject();
-                    $userInfo->setAttribute("graphql_jwt_refresh_token_expires", $token['exp']);
-                }
-            }
+            $authenticate->setRefreshTokenExpires($user, $token['exp']);
 
             $this->isRefreshToken = false;
         } else {
-            if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-                if (0 !== $user->getUserID()) {
-                    $entityManager = App::make(EntityManagerInterface::class);
-                    $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                    $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                    $item->setUserGraphqlJwtTokenExpires($token['exp']);
-
-                    $entityManager->persist($item);
-                    $entityManager->flush();
-                }
-            } else {
-                $up = new Permissions(UserInfo::getByID($user->getUserID()));
-                if (0 !== $user->getUserID() && ($up->canEditUser() ||
-                    $user->getUserID() === $currentUser->getUserID())) {
-                    $userInfo = $user->getUserInfoObject();
-                    $userInfo->setAttribute("graphql_jwt_token_expires", $token['exp']);
-                }
-            }
+            $authenticate->setTokenExpires($user, $token['exp']);
         }
 
         JWT::$leeway = 60;
@@ -554,23 +398,8 @@ class Authorize
 
     protected function getNotBefore($user)
     {
-        $notBefore = 0;
-
-        if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-            if (0 !== $user->getUserID()) {
-                $entityManager = App::make(EntityManagerInterface::class);
-                $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                $notBefore = $item->getUserGraphqlJwtTokenNotBefore();
-            }
-        } else {
-            if (0 !== $user->getUserID()) {
-                $userInfo = $user->getUserInfoObject();
-                $notBefore = $userInfo->getAttributeValue("graphql_jwt_token_not_before");
-            }
-        }
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        $notBefore = $authenticate->getNotBefore($user);
 
         return $notBefore > 0 ? $notBefore : $this->getTokenIssued();
     }

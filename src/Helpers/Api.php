@@ -9,11 +9,6 @@ use Siler\Http\Request;
 use Siler\GraphQL as SilerGraphQL;
 use Siler\Http\Response;
 use Concrete\Core\Support\Facade\Application as App;
-use Doctrine\ORM\EntityManagerInterface;
-use Entity\AnonymusUser as AnonymusUserEntity;
-use Concrete\Core\Localization\Localization;
-use Concrete\Core\Http\Request as ConcreteRequest;
-use Concrete\Core\Permission\IPService;
 
 class Api extends Controller
 {
@@ -45,42 +40,8 @@ class Api extends Controller
                 Response\header('X-JWT-Refresh', $refreshToken);
             }
 
-            $config = App::make('config');
-            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_requests')) {
-                $ipService = App::make(IPService::class);
-                $request = App::make(ConcreteRequest::class);
-                $ip = (string) $ipService->getRequestIPAddress();
-                $timezone = date_default_timezone_get();
-                $language = Localization::activeLocale();
-                $currentTime = time();
-                $userAgent = $request->server->get('HTTP_USER_AGENT');
-
-                if (method_exists($user, 'getAnonymus') && $user->getAnonymus()) {
-                    if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
-                        $entityManager = App::make(EntityManagerInterface::class);
-                        $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-
-                        $item = $anonymusUserRepository->findOneBy(['uID' => $user->getUserID()]);
-
-                        $item->setUserGraphqlJwtLastRequest($currentTime);
-                        $item->setUserGraphqlJwtLastRequestIp($ip);
-                        $item->setUserGraphqlJwtLastRequestAgent($userAgent);
-                        $item->setUserGraphqlJwtLastRequestTimezone($timezone);
-                        $item->setUserGraphqlJwtLastRequestLanguage($language);
-                        $item->setUserGraphqlJwtRequestCount($item->getUserGraphqlJwtRequestCount() > 0 ? ($item->getUserGraphqlJwtRequestCount() + 1) : 1);
-                        $entityManager->persist($item);
-                        $entityManager->flush();
-                    }
-                } else {
-                    $userInfo = $user->getUserInfoObject();
-                    $userInfo->setAttribute("graphql_jwt_last_request", $currentTime);
-                    $userInfo->setAttribute("graphql_jwt_last_request_ip", $ip);
-                    $userInfo->setAttribute("graphql_jwt_last_request_agent", $userAgent);
-                    $userInfo->setAttribute("graphql_jwt_last_request_timezone", $timezone);
-                    $userInfo->setAttribute("graphql_jwt_last_request_language", $language);
-                    $userInfo->setAttribute("graphql_jwt_request_count", $userInfo->getAttributeValue("graphql_jwt_request_count") > 0 ? ($userInfo->getAttributeValue("graphql_jwt_request_count") + 1) : 1);
-                }
-            }
+            $authenticate = App::make(\Helpers\Authenticate::class);
+            $authenticate->logRequest($user);
         } else {
             if (Request\header('Content-Type') == 'application/json') {
                 $data = Request\json('php://input');

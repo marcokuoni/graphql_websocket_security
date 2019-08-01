@@ -266,14 +266,6 @@ class AnonymusUser implements JsonSerializable
     }
 
     /**
-     * @return boolean|null
-     */
-    public function getAnonymus()
-    {
-        return true;
-    }
-
-    /**
      * @param int $uID
      */
     public function setUserID($uID)
@@ -456,6 +448,7 @@ class AnonymusUser implements JsonSerializable
             'uGraphqlJwtLastRequestTimezone' => $this->getUserGraphqlJwtLastRequestTimezone(),
             'uGraphqlJwtLastRequestLanguage' => $this->getUserGraphqlJwtLastRequestLanguage(),
             'uGraphqlJwtRequestCount' => $this->getUserGraphqlJwtRequestCount(),
+            'anonymus' => true
         ];
     }
 }

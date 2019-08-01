@@ -36,8 +36,10 @@ type Mutation {
     password: String!
   ): Auth
 
+  "Login an anonymus user. Request for an authToken and User details in response"
   loginAnonymus: Auth
 
+  "Logout an user."
   logout: Boolean!
 
   "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
