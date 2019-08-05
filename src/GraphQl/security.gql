@@ -19,7 +19,7 @@ type Query {
     me: User
     "A JWT token from current user, that can be used in future requests for authentication/authorization"
     jwtAuthToken: String
-    "A JWT token fomr current user, that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers"
+    "A JWT token from current user, that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers"
     jwtRefreshToken: String
     "A unique secret tied to the current user JWT token that can be revoked or refreshed. Revoking the secret prevents JWT tokens from being issued to the user. Refreshing the token invalidates previously issued tokens, but allows new tokens to be issued"
     jwtUserSecret: String
