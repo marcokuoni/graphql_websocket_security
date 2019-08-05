@@ -1,7 +1,7 @@
 type User {
   uID: String
   uName: String
-  anonymus: Boolean
+  anonymous: Boolean
   uGroups: [Int]
 }
 
@@ -38,8 +38,8 @@ type Mutation {
     password: String!
   ): Auth
 
-  "Login an anonymus user. Request for an authToken and User details in response"
-  loginAnonymus: Auth
+  "Login an anonymous user. Request for an authToken and User details in response"
+  loginAnonymous: Auth
 
   "Logout an user"
   logout: Boolean!

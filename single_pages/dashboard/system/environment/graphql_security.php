@@ -93,7 +93,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs anonymus user in the database, you will see the table here in the bottom. Pls consider to add a automated job to remove old entries') ?>"><?= t('Log Anonymus User') ?></label>
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs anonymous user in the database, you will see the table here in the bottom. Pls consider to add a automated job to remove old entries') ?>"><?= t('Log Anonymous User') ?></label>
             <div class="radio">
                 <label>
                     <?= $form->radio('log_anonymus_users', 'yes', $log_anonymus_users) ?>
@@ -157,7 +157,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to a concrete5 or anonymus user') ?>"><?= t('Log User Requests') ?></label>
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to a concrete5 or anonymous user') ?>"><?= t('Log User Requests') ?></label>
             <div class="radio">
                 <label>
                     <?= $form->radio('log_requests', 'yes', $log_requests) ?>
@@ -177,7 +177,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
     <div class="ccm-dashboard-form-actions-wrapper">
         <div class="ccm-dashboard-form-actions">
             <a class="pull-left btn btn-danger" name="delete-all-anonymus-users" href="javascript:void(0);">
-                <?= t('Delete all anonymus users') ?>
+                <?= t('Delete all anonymous users') ?>
             </a>
             <button class="pull-right btn btn-primary" type="submit"><?= t('Save') ?></button>
         </div>
@@ -249,7 +249,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         }
 
         $deleteAllAnonymusUser.click(function() {
-            if (confirm("<?= t('Are you sure, that you want to delete all anonymus users?') ?>")) {
+            if (confirm("<?= t('Are you sure, that you want to delete all anonymous users?') ?>")) {
                 $(document.body).css({
                     'cursor': 'wait'
                 });

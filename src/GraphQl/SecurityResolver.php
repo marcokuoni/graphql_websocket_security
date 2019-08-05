@@ -21,7 +21,7 @@ class SecurityResolver
                     $returnUser = [
                         "uID" => $user->getUserID(),
                         "uName" => $user->getUserName(),
-                        "anonymus" => get_class($user) === AnonymusUserEntity::class,
+                        "anonymous" => get_class($user) === AnonymusUserEntity::class,
                         "uGroups" => $user->getUserGroups()
                     ];
                 }
@@ -85,7 +85,7 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetToken($username, $password);
             },
-            'loginAnonymus' => function ($root, $args) {
+            'loginAnonymous' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetTokenFromAnonymus();
             },
