@@ -102,7 +102,7 @@ class GraphqlSecurity extends DashboardPageController
         if ($log_anonymus_users) {
             $entityManager = App::make(EntityManagerInterface::class);
             $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
-            $anonymusUsers = $anonymusUserRepository->findAll();
+            $anonymusUsers = $anonymusUserRepository->findBy(array(), array('uDateAdded' => 'desc'));
         }
 
         return $this->app->make(ResponseFactoryInterface::class)->json($anonymusUsers);
