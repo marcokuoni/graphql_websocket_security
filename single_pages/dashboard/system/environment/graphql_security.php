@@ -87,7 +87,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             <div class="radio">
                 <label>
                     <?= $form->radio('just_with_valid_token', 'no', !$just_with_valid_token) ?>
-                    <span><?= t('Off') ?></span>
+                    <span><?= t('Off, i know what i am doing') ?></span>
                 </label>
             </div>
         </div>
