@@ -266,6 +266,16 @@ class AnonymusUser implements JsonSerializable
     }
 
     /**
+     * Returns an array of group ids the user belongs to.
+     *
+     * @return array
+     */
+    public function getUserGroups()
+    {
+        return null;
+    }
+
+    /**
      * @param int $uID
      */
     public function setUserID($uID)

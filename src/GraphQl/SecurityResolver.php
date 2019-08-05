@@ -4,6 +4,7 @@ namespace GraphQl;
 
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\User\User;
+use Entity\AnonymusUser as AnonymusUserEntity;
 
 class SecurityResolver
 {
@@ -16,9 +17,16 @@ class SecurityResolver
 
                 if (empty($user)) {
                     throw new \Exception(t('The JWT token could not be returned'));
+                } else {
+                    $returnUser = [
+                        "uID" => $user->getUserID(),
+                        "uName" => $user->getUserName(),
+                        "anonymus" => get_class($user) === AnonymusUserEntity::class,
+                        "uGroups" => $user->getUserGroups()
+                    ];
                 }
 
-                return json_decode(json_encode($user));
+                return $returnUser;//json_decode(json_encode($user));
             },
             'jwtAuthToken' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);

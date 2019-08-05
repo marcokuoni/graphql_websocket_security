@@ -93,7 +93,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Log anonymus user in the database, you will see the table here in the bottom. Pls consider to add a automated job to remove old entries') ?>"><?= t('Log Anonymus User') ?></label>
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs anonymus user in the database, you will see the table here in the bottom. Pls consider to add a automated job to remove old entries') ?>"><?= t('Log Anonymus User') ?></label>
             <div class="radio">
                 <label>
                     <?= $form->radio('log_anonymus_users', 'yes', $log_anonymus_users) ?>
@@ -157,7 +157,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to an user') ?>"><?= t('Log User Requests') ?></label>
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to a concrete5 or anonymus user') ?>"><?= t('Log User Requests') ?></label>
             <div class="radio">
                 <label>
                     <?= $form->radio('log_requests', 'yes', $log_requests) ?>
