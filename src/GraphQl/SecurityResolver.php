@@ -21,7 +21,7 @@ class SecurityResolver
                     $returnUser = [
                         "uID" => $user->getUserID(),
                         "uName" => $user->getUserName(),
-                        "anonymous" => get_class($user) === AnonymusUserEntity::class,
+                        "anonymus" => get_class($user) === AnonymusUserEntity::class,
                         "uGroups" => $user->getUserGroups()
                     ];
                 }
@@ -85,7 +85,7 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetToken($username, $password);
             },
-            'loginAnonymous' => function ($root, $args) {
+            'loginAnonymus' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetTokenFromAnonymus();
             },
@@ -104,12 +104,8 @@ class SecurityResolver
                     throw new \Exception(t('The provided refresh token is invalid'));
                 }
 
-                if ($refreshToken->data->user->anonymus) {
-                    $anonymusUser = App::make(\Helpers\AnonymusUser::class);
-                    $user =  $anonymusUser->getAnonymusUser($id);
-                } else {
-                    $user = User::getByUserID($id);
-                }
+                $authenticate = App::make(\Helpers\Authenticate::class);
+                $user = $authenticate->getUserByToken($refreshToken);
 
                 $authToken = $authorize->getToken($user, false);
 

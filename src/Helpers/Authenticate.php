@@ -301,7 +301,9 @@ class Authenticate
             $anonymusUser = App::make(\Helpers\AnonymusUser::class);
             return $anonymusUser->getAnonymusUser($token->data->user->uID);
         } else {
-            return User::getByUserID($token->data->user->uID);
+            //return User::getByUserID($token->data->user->uID);
+            //Just give access to the current session user
+            return App::make(User::class);
         }
     }
 
