@@ -7,7 +7,6 @@ use Concrete\Core\Http\Middleware\DelegateInterface;
 use Concrete\Core\Http\Middleware\MiddlewareInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Concrete\Core\Support\Facade\Application as App;
-use Concrete\Core\User\User;
 
 /**
  * Custom middleware that adds information to the response

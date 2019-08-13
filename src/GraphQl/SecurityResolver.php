@@ -3,7 +3,6 @@
 namespace GraphQl;
 
 use Concrete\Core\Support\Facade\Application as App;
-use Concrete\Core\User\User;
 use Entity\AnonymusUser as AnonymusUserEntity;
 
 class SecurityResolver
