@@ -111,7 +111,6 @@ class SecurityResolver
                 return [
                     'authToken' => $authToken,
                     'refreshToken' => $authorize->getRefreshToken($user),
-                    'user'         => json_decode(json_encode($user)),
                 ];
             },
             'revokeJwtUserSecret' => function ($root, $args) {

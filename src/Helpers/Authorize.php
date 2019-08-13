@@ -50,7 +50,6 @@ class Authorize
         $response = [
             'authToken'    => $this->getSignedToken($user),
             'refreshToken' => $this->getRefreshToken($user),
-            'user'         => json_decode(json_encode($user)),
         ];
 
         return !empty($response) ? $response : [];
@@ -68,7 +67,6 @@ class Authorize
         $response = [
             'authToken'    => $this->getSignedToken($user),
             'refreshToken' => $this->getRefreshToken($user),
-            'user'         => json_decode(json_encode($user)),
         ];
 
         return !empty($response) ? $response : [];

@@ -10,8 +10,6 @@ type Auth {
   authToken: String
   "'A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
   refreshToken: String
-  "The user that was logged in"
-  user: User
 }
 
 type Query {
