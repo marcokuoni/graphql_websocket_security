@@ -39,7 +39,7 @@ type Mutation {
   loginAnonymus: Auth
 
   "Logout an user."
-  logout: Boolean!
+  logout: Auth
 
   "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
   refreshJwtAuthToken(

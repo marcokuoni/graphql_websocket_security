@@ -90,7 +90,8 @@ class SecurityResolver
             },
             'logout' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
-                return $authorize->logout();
+                $authorize->logout();
+                return $authorize->loginAndGetTokenFromAnonymus();
             },
             'refreshJwtAuthToken' => function ($root, $args) {
                 $refreshToken = (string) $args['jwtRefreshToken'];
