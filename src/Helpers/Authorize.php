@@ -141,9 +141,9 @@ class Authorize
         $authenticate = App::make(\Helpers\Authenticate::class);
 
         $currentUser = $authenticate->getCurrentUser();
-        if ($currentUser->getUserID() !== $user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
+        if ((Int)$currentUser->getUserID() !== (Int)$user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
             $config = App::make('config');
-            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users') || (get_class($currentUser) !== AnonymusUserEntity::class)) {
+            if (get_class($currentUser) !== AnonymusUserEntity::class) {
                 throw new \Exception(t('The JWT Auth secret cannot be returned'));
             }
         }
@@ -350,9 +350,9 @@ class Authorize
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $currentUser = $authenticate->getCurrentUser();
-        if (true === $capCheck && $currentUser->getUserID() !== $user->getUserID() || 0 === $user->getUserID()) {
+        if (true === $capCheck && (empty($user) || (Int)$currentUser->getUserID() !== (Int)$user->getUserID() || 0 === (Int)$user->getUserID())) {
             $config = App::make('config');
-            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users') || (get_class($currentUser) !== AnonymusUserEntity::class)) {
+            if (get_class($currentUser) !== AnonymusUserEntity::class) {
                 throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
             }
         }

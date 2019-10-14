@@ -15,6 +15,7 @@ use Concrete\Core\Http\Request as ConcreteRequest;
 use Concrete\Core\Permission\IPService;
 use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfo;
+use Concrete\Core\User\PersistentAuthentication;
 use Core;
 use Session;
 use Database;
@@ -79,7 +80,11 @@ class Authenticate
         }
 
         $anonymusUser = App::make(\Helpers\AnonymusUser::class);
-        $user = $anonymusUser->getAnonymusUser();
+        if (empty($currentUser) || $currentUser->getUserID() === null) {
+            $user = $anonymusUser->getAnonymusUser();
+        } else {
+            $user = $currentUser;
+        }
 
         return !empty($user) ? $user : null;
     }
@@ -142,20 +147,9 @@ class Authenticate
             $cookie->clear($config->get('concrete.session.name'));
         }
 
-        if ($cookie->has('ccmAuthUserHash') && $cookie->get('ccmAuthUserHash')) {
-            $cookie->set(
-                'ccmAuthUserHash',
-                '',
-                315532800,
-                DIR_REL . '/',
-                $config->get('concrete.session.cookie.cookie_domain'),
-                $config->get('concrete.session.cookie.cookie_secure'),
-                $config->get('concrete.session.cookie.cookie_httponly')
-            );
-        }
+        $app->make(PersistentAuthentication\CookieService::class)->deleteCookie();
 
         $loginCookie = sprintf('%s_LOGIN', $app['config']->get('concrete.session.name'));
-
         if ($cookie->has($loginCookie) && $cookie->get($loginCookie)) {
             $cookie->clear($loginCookie, 1);
         }
@@ -164,13 +158,13 @@ class Authenticate
     public function setSecret($user, $secret)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setSecret($user, $secret);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== $user->getUserID() && $up->canEditUser()) {
+            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
             }
@@ -182,12 +176,12 @@ class Authenticate
         $secret = null;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $secret = $anonymusUser->getSecret($user);
             }
         } else {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $secret = $userInfo->getAttribute("graphql_jwt_auth_secret");
             }
@@ -199,7 +193,7 @@ class Authenticate
     public function setRevoked($user, $revoked)
     {
         $currentUser = $this->getCurrentUser();
-        if ($currentUser->getUserID() === $user->getUserID()) {
+        if ((Int)$currentUser->getUserID() === (Int)$user->getUserID()) {
             if (get_class($user) === AnonymusUserEntity::class) {
                 if (0 !== $user->getUserID()) {
                     $anonymusUser = App::make(AnonymusUser::class);
@@ -211,7 +205,7 @@ class Authenticate
                 }
             } else {
                 $up = new Permissions(UserInfo::getByID($user->getUserID()));
-                if (0 !== $user->getUserID() && $up->canEditUser()) {
+                if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
                     $userInfo = $user->getUserInfoObject();
                     $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", $revoked);
 
@@ -230,12 +224,12 @@ class Authenticate
         $revoked = null;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $revoked = $anonymusUser->getRevoked($user);
             }
         } else {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $revoked = $userInfo->getAttribute("graphql_jwt_auth_secret_revoked");
             }
@@ -247,13 +241,13 @@ class Authenticate
     public function setTokenExpires($user, $expires)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setTokenExpires($user, $expires);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== $user->getUserID() && $up->canEditUser()) {
+            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_token_expires", $expires);
             }
@@ -263,13 +257,13 @@ class Authenticate
     public function setRefreshTokenExpires($user, $expires)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setRefreshTokenExpires($user, $expires);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== $user->getUserID() && $up->canEditUser()) {
+            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_refresh_token_expires", $expires);
             }
@@ -281,12 +275,12 @@ class Authenticate
         $notBefore = 0;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $notBefore = $anonymusUser->getNotBefore($user);
             }
         } else {
-            if (0 !== $user->getUserID()) {
+            if (0 !== (Int)$user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $notBefore = $userInfo->getAttribute("graphql_jwt_token_not_before");
             }
@@ -310,10 +304,12 @@ class Authenticate
     public function getCurrentUser()
     {
         $currentUser = App::make(User::class);
+
+        $anonymusUser = App::make(\Helpers\AnonymusUser::class);
         if (empty($currentUser) || $currentUser->getUserID() === null) {
-            $anonymusUser = App::make(\Helpers\AnonymusUser::class);
             $currentUser = $anonymusUser->getAnonymusUser();
         }
+        
         return $currentUser;
     }
 

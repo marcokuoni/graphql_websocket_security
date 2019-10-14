@@ -18,7 +18,7 @@ class AnonymusUser extends ConcreteObject
         $entityManager = App::make(EntityManagerInterface::class);
         $anonymusUserRepository = $entityManager->getRepository(AnonymusUserEntity::class);
         $app = App::getFacadeApplication();
-        $session = $app['session'];
+        $session = $app->make('session');
         $config = $app->make('config');
 
         if ($uID !== null && $uID > 0) {
@@ -32,7 +32,7 @@ class AnonymusUser extends ConcreteObject
                 }
             }
         } else {
-            if ($session->has('auID') && $session->get('anonymus')) {
+            if ($session->has('auID') && $session->has('anonymus')) {
                 $uID = $session->get('auID');
 
                 if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_anonymus_users')) {
