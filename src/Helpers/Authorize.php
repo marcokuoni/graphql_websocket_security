@@ -6,6 +6,7 @@ use Firebase\JWT\JWT;
 use GraphQL\Error\UserError;
 use Concrete\Core\Support\Facade\Application as App;
 use Entity\AnonymusUser as AnonymusUserEntity;
+use Zend\Http\PhpEnvironment\Request;
 
 class Authorize
 {
@@ -29,7 +30,7 @@ class Authorize
     }
 
     /**
-     * Get the user and password in the request body and generate a JWT
+     * Get the user and password in the request body and generat a JWT
      *
      * @param string $username
      * @param string $password
@@ -50,6 +51,7 @@ class Authorize
         $response = [
             'authToken'    => $this->getSignedToken($user),
             'refreshToken' => $this->getRefreshToken($user),
+            'user'         => json_decode(json_encode($user)),
         ];
 
         return !empty($response) ? $response : [];
@@ -67,6 +69,7 @@ class Authorize
         $response = [
             'authToken'    => $this->getSignedToken($user),
             'refreshToken' => $this->getRefreshToken($user),
+            'user'         => json_decode(json_encode($user)),
         ];
 
         return !empty($response) ? $response : [];
@@ -267,6 +270,9 @@ class Authorize
                 return false;
             } else {
                 list($token) = sscanf($authHeader, 'Bearer %s');
+                if (!isset($token)) {
+                    list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
+                }
             }
         }
 
@@ -317,7 +323,11 @@ class Authorize
      */
     public function getAuthHeader()
     {
-        $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
+        $request = new Request();
+        $authHeader = $request->getHeader('authorization')->toString();
+        if (!isset($authHeader)) {
+            $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
+        }
         $redirectAuthHeader = isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
         $authHeader = $authHeader !== false ? $authHeader : ($redirectAuthHeader !== false ? $redirectAuthHeader : null);
 
