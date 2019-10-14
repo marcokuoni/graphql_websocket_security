@@ -57,6 +57,17 @@ class Authorize
         return !empty($response) ? $response : [];
     }
 
+    public function loginAndGetTokenFromUser($user)
+    {
+        $response = [
+            'authToken'    => $this->getSignedToken($user),
+            'refreshToken' => $this->getRefreshToken($user),
+            'user'         => json_decode(json_encode($user)),
+        ];
+
+        return !empty($response) ? $response : [];
+    }
+
     public function loginAndGetTokenFromAnonymus()
     {
         if (empty($this->getSecretKey())) {
@@ -141,7 +152,7 @@ class Authorize
         $authenticate = App::make(\Helpers\Authenticate::class);
 
         $currentUser = $authenticate->getCurrentUser();
-        if ((Int)$currentUser->getUserID() !== (Int)$user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
+        if ((int) $currentUser->getUserID() !== (int) $user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
             $config = App::make('config');
             if (get_class($currentUser) !== AnonymusUserEntity::class) {
                 throw new \Exception(t('The JWT Auth secret cannot be returned'));
@@ -350,7 +361,7 @@ class Authorize
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $currentUser = $authenticate->getCurrentUser();
-        if (true === $capCheck && (empty($user) || (Int)$currentUser->getUserID() !== (Int)$user->getUserID() || 0 === (Int)$user->getUserID())) {
+        if (true === $capCheck && (empty($user) || (int) $currentUser->getUserID() !== (int) $user->getUserID() || 0 === (int) $user->getUserID())) {
             $config = App::make('config');
             if (get_class($currentUser) !== AnonymusUserEntity::class) {
                 throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
