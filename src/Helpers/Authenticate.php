@@ -328,7 +328,7 @@ class Authenticate
             if (get_class($user) === AnonymusUserEntity::class) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->logRequest($user, $currentTime, $ip, $userAgent, $timezone, $language);
-            } else {
+            } else if ((int)$user->getUserID() > 0) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_last_request", $currentTime);
                 $userInfo->setAttribute("graphql_jwt_last_request_ip", $ip);
