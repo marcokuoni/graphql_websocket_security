@@ -16,10 +16,14 @@ use Concrete\Core\Permission\IPService;
 use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfo;
 use Concrete\Core\User\PersistentAuthentication;
+use Concrete\Core\Validator\String\EmailValidator;
+use Concrete\Core\User\ValidationHash;
+use Config;
 use Core;
 use Session;
 use Database;
 use Permissions;
+use View;
 
 class Authenticate
 {
@@ -110,6 +114,98 @@ class Authenticate
         return true;
     }
 
+    public function forgotPassword($username, $currentLanguage)
+    {
+        $error = App::make('helper/validation/error');
+
+        if ($username) {
+            try {
+                $e = App::make('error');
+                if (!App::make(EmailValidator::class)->isValid($username, $e)) {
+                    throw new \Exception($e->toText());
+                }
+
+                $oUser = UserInfo::getByEmail($username);
+                if ($oUser) {
+                    $mh = App::make('helper/mail');
+                    //$mh->addParameter('uPassword', $oUser->resetUserPassword());
+                    if (Config::get('concrete.user.registration.email_registration')) {
+                        $mh->addParameter('uName', $oUser->getUserEmail());
+                    } else {
+                        $mh->addParameter('uName', $oUser->getUserName());
+                    }
+                    $mh->to($oUser->getUserEmail());
+
+                    //generate hash that'll be used to authenticate user, allowing them to change their password
+                    $h = new ValidationHash();
+                    $uHash = $h->add($oUser->getUserID(), intval(UVTYPE_CHANGE_PASSWORD), true);
+                    $changePassURL = View::url("/#!/{$currentLanguage}/auth/change-password/{$uHash}");
+
+                    $mh->addParameter('changePassURL', $changePassURL);
+
+                    $fromEmail = (string) Config::get('concrete.email.forgot_password.address');
+                    if (!strpos($fromEmail, '@')) {
+                        $adminUser = UserInfo::getByID(USER_SUPER_ID);
+                        if (is_object($adminUser)) {
+                            $fromEmail = $adminUser->getUserEmail();
+                        } else {
+                            $fromEmail = '';
+                        }
+                    }
+                    if ($fromEmail) {
+                        $fromName = (string) Config::get('concrete.email.forgot_password.name');
+                        if ($fromName === '') {
+                            $fromName = t('Forgot Password');
+                        }
+                        $mh->from($fromEmail, $fromName);
+                    }
+
+                    $mh->addParameter('siteName', tc('SiteName', App::make('site')->getSite()->getSiteName()));
+                    $mh->load('forgot_password');
+                    @$mh->sendMail();
+                }
+            } catch (\Exception $e) {
+                $error->add($e);
+            }
+            if ($error->has()) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public function changePassword($password, $passwordConfirm, $token)
+    {
+        $e = Core::make('helper/validation/error');
+        if (is_string($token)) {
+            $ui = UserInfo::getByValidationHash($token);
+        } else {
+            $ui = null;
+        }
+        if (is_object($ui)) {
+            $vh = new ValidationHash();
+            if ($vh->isValid($token)) {
+                if (isset($password) && strlen($password)) {
+                    Core::make('validator/password')->isValidFor($password, $ui, $e);
+
+                    if (strlen($passwordConfirm) && $passwordConfirm !== $password) {
+                        $e->add(t('The two passwords provided do not match.'));
+                    }
+
+                    if (!$e->has()) {
+                        $ui->changePassword($password);
+                        $h = Core::make('helper/validation/identifier');
+                        $h->deleteKey('UserValidationHashes', 'uHash', $token);
+
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     protected function handleFailedLogin(LoginService $loginService, $username, $password, UserException $e)
     {
         if ($e instanceof InvalidCredentialsException) {
@@ -158,13 +254,13 @@ class Authenticate
     public function setSecret($user, $secret)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setSecret($user, $secret);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
+            if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
             }
@@ -176,12 +272,12 @@ class Authenticate
         $secret = null;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $secret = $anonymusUser->getSecret($user);
             }
         } else {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $secret = $userInfo->getAttribute("graphql_jwt_auth_secret");
             }
@@ -193,7 +289,7 @@ class Authenticate
     public function setRevoked($user, $revoked)
     {
         $currentUser = $this->getCurrentUser();
-        if ((Int)$currentUser->getUserID() === (Int)$user->getUserID()) {
+        if ((int) $currentUser->getUserID() === (int) $user->getUserID()) {
             if (get_class($user) === AnonymusUserEntity::class) {
                 if (0 !== $user->getUserID()) {
                     $anonymusUser = App::make(AnonymusUser::class);
@@ -205,7 +301,7 @@ class Authenticate
                 }
             } else {
                 $up = new Permissions(UserInfo::getByID($user->getUserID()));
-                if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
+                if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                     $userInfo = $user->getUserInfoObject();
                     $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", $revoked);
 
@@ -224,12 +320,12 @@ class Authenticate
         $revoked = null;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $revoked = $anonymusUser->getRevoked($user);
             }
         } else {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $revoked = $userInfo->getAttribute("graphql_jwt_auth_secret_revoked");
             }
@@ -241,13 +337,13 @@ class Authenticate
     public function setTokenExpires($user, $expires)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setTokenExpires($user, $expires);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
+            if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_token_expires", $expires);
             }
@@ -257,13 +353,13 @@ class Authenticate
     public function setRefreshTokenExpires($user, $expires)
     {
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->setRefreshTokenExpires($user, $expires);
             }
         } else {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== (Int)$user->getUserID() && $up->canEditUser()) {
+            if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_refresh_token_expires", $expires);
             }
@@ -275,12 +371,12 @@ class Authenticate
         $notBefore = 0;
 
         if (get_class($user) === AnonymusUserEntity::class) {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $notBefore = $anonymusUser->getNotBefore($user);
             }
         } else {
-            if (0 !== (Int)$user->getUserID()) {
+            if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $notBefore = $userInfo->getAttribute("graphql_jwt_token_not_before");
             }
@@ -309,7 +405,7 @@ class Authenticate
         if (empty($currentUser) || $currentUser->getUserID() === null) {
             $currentUser = $anonymusUser->getAnonymusUser();
         }
-        
+
         return $currentUser;
     }
 
@@ -328,7 +424,7 @@ class Authenticate
             if (get_class($user) === AnonymusUserEntity::class) {
                 $anonymusUser = App::make(AnonymusUser::class);
                 $anonymusUser->logRequest($user, $currentTime, $ip, $userAgent, $timezone, $language);
-            } else if ((int)$user->getUserID() > 0) {
+            } else if ((int) $user->getUserID() > 0) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_last_request", $currentTime);
                 $userInfo->setAttribute("graphql_jwt_last_request_ip", $ip);

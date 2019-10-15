@@ -41,6 +41,17 @@ type Mutation {
   "Logout an user."
   logout: Auth
 
+  forgotPassword(
+      username: String!
+      currentLanguage: String!
+  ): Boolean
+
+  changePassword(
+      password: String!
+      passwordConfirm: String!
+      token: String!
+  ): Boolean
+
   "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
   refreshJwtAuthToken(
       "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."

@@ -93,6 +93,21 @@ class SecurityResolver
                 $authorize->logout();
                 return $authorize->loginAndGetTokenFromAnonymus();
             },
+            'forgotPassword' => function ($root, $args) {
+                $username = (string) $args['username'];
+                $currentLanguage = (string) $args['currentLanguage'];
+
+                $authorize = App::make(\Helpers\Authenticate::class);
+                return $authorize->forgotPassword($username, $currentLanguage);
+            },
+            'changePassword' => function ($root, $args) {
+                $password = (string) $args['password'];
+                $passwordConfirm = (string) $args['passwordConfirm'];
+                $token = (string) $args['token'];
+
+                $authorize = App::make(\Helpers\Authenticate::class);
+                return $authorize->changePassword($password, $passwordConfirm, $token);
+            },
             'refreshJwtAuthToken' => function ($root, $args) {
                 $refreshToken = (string) $args['jwtRefreshToken'];
 
