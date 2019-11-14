@@ -271,6 +271,9 @@ class Authorize
      */
     public function validateToken($token = null, $refresh = false)
     {
+        if (!$token && $refresh) {
+            return false;
+        }
 
         $this->isRefreshToken = (true === $refresh) ? true : false;
 
@@ -285,6 +288,8 @@ class Authorize
                     list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
                 }
             }
+        } else if ($refresh) {
+            list($token) = sscanf($token, 'Refresh-Token: %s');
         }
 
         if (!$this->getSecretKey()) {
@@ -335,7 +340,7 @@ class Authorize
     public function getAuthHeader()
     {
         $request = new Request();
-        $authHeader = $request->getHeader('authorization')->toString();
+        $authHeader = $request->getHeader('authorization') ? $request->getHeader('authorization')->toString() : null;
         if (!isset($authHeader)) {
             $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
         }
@@ -347,7 +352,11 @@ class Authorize
 
     public function getRefreshHeader()
     {
-        $refreshHeader = isset($_SERVER['HTTP_REFRESH_AUTHORIZATION']) ? sanitize_text_field($_SERVER['HTTP_REFRESH_AUTHORIZATION']) : false;
+        $request = new Request();
+        $refreshHeader = $request->getHeader('refresh_token') ? $request->getHeader('refresh_token')->toString() : null;
+        if (!isset($refreshHeader)) {
+            $refreshHeader = isset($_SERVER['HTTP_REFRESH_TOKEN']) ? $_SERVER['HTTP_REFRESH_TOKEN'] : false;
+        }
 
         return $refreshHeader;
     }
