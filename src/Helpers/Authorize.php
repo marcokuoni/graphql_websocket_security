@@ -3,10 +3,10 @@
 namespace Helpers;
 
 use Firebase\JWT\JWT;
-use GraphQL\Error\UserError;
 use Concrete\Core\Support\Facade\Application as App;
 use Entity\AnonymusUser as AnonymusUserEntity;
 use Zend\Http\PhpEnvironment\Request;
+use Concrete\Core\Error\UserMessageException;
 
 class Authorize
 {
@@ -42,7 +42,7 @@ class Authorize
     public function loginAndGetToken($username, $password)
     {
         if (empty($this->getSecretKey())) {
-            throw new UserError(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
+            throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
 
         $authenticate = App::make(\Helpers\Authenticate::class);
@@ -71,7 +71,7 @@ class Authorize
     public function loginAndGetTokenFromAnonymus()
     {
         if (empty($this->getSecretKey())) {
-            throw new UserError(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
+            throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
 
         $authenticate = App::make(\Helpers\Authenticate::class);
@@ -101,7 +101,7 @@ class Authorize
             $authenticate = App::make(\Helpers\Authenticate::class);
             return $authenticate->getUserByToken($token);
         }
-        throw new \Exception(t('Unauthenticated!'));
+        throw new \UserMessageException(t('Unauthenticated!'), 401);
         return false;
     }
 
@@ -155,7 +155,7 @@ class Authorize
         if ((int) $currentUser->getUserID() !== (int) $user->getUserID() || true === $this->isJwtSecretRevoked($user)) {
             $config = App::make('config');
             if (get_class($currentUser) !== AnonymusUserEntity::class) {
-                throw new \Exception(t('The JWT Auth secret cannot be returned'));
+                throw new UserMessageException(t('The JWT Auth secret cannot be returned'));
             }
         }
 
@@ -293,7 +293,7 @@ class Authorize
         }
 
         if (!$this->getSecretKey()) {
-            throw new \Exception(t('JWT is not configured properly'));
+            throw new UserMessageException(t('JWT is not configured properly'));
         }
 
         try {
@@ -324,7 +324,7 @@ class Authorize
                 }
             }
         } catch (\Exception $error) {
-            throw new \Exception(t('The JWT Token is invalid'));
+            throw new UserMessageException(t('The JWT Token is invalid'), 401);
         }
 
         $this->isRefreshToken = false;
@@ -373,7 +373,7 @@ class Authorize
         if (true === $capCheck && (empty($user) || (int) $currentUser->getUserID() !== (int) $user->getUserID() || 0 === (int) $user->getUserID())) {
             $config = App::make('config');
             if (get_class($currentUser) !== AnonymusUserEntity::class) {
-                throw new \Exception(t('Only the user requesting a token can get a token issued for them'));
+                throw new UserMessageException(t('Only the user requesting a token can get a token issued for them'));
             }
         }
 
