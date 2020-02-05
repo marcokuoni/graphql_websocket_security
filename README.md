@@ -1,4 +1,4 @@
-# GraphQL Websocket Concrete5 Security Composer Package
+    # GraphQL Websocket Concrete5 Security Composer Package
 The idea of this repo is to give all functionallity to use the [GraphQL and Websockets Composer Package](https://github.com/lemonbrain-mk/graphql_websocket) secure in Concrete5.
 
 Use this package just as a composer Concrete5 package, cause of the composer requirings

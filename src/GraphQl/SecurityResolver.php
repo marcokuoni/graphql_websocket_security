@@ -3,7 +3,6 @@
 namespace GraphQl;
 
 use Concrete\Core\Support\Facade\Application as App;
-use Entity\AnonymusUser as AnonymusUserEntity;
 
 class SecurityResolver
 {
@@ -13,67 +12,22 @@ class SecurityResolver
             'me' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
                 $user = $authorize->authenticated();
+                $returnUser = [
+                    "uID" => '',
+                    "uName" => '',
+                    "uGroups" => ''
+                ];
 
-                if (empty($user)) {
-                    throw new \Exception(t('The JWT token could not be returned'));
-                } else {
+                if (!empty($user)) {
                     $returnUser = [
                         "uID" => $user->getUserID(),
                         "uName" => $user->getUserName(),
-                        "anonymus" => get_class($user) === AnonymusUserEntity::class,
                         "uGroups" => $user->getUserGroups()
                     ];
                 }
 
-                return $returnUser;//json_decode(json_encode($user));
+                return $returnUser;
             },
-            'jwtAuthToken' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-                $token = $authorize->getToken($user);
-
-                if (empty($token)) {
-                    throw new \Exception(t('The JWT token could not be returned'));
-                }
-
-                return !empty($token) ? $token : null;
-            },
-            'jwtRefreshToken' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-                $token = $authorize->getRefreshToken($user);
-
-                if (empty($token)) {
-                    throw new \Exception(t('The JWT token could not be returned'));
-                }
-
-                return !empty($token) ? $token : null;
-            },
-            'jwtUserSecret' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-                $secret = $authorize->getUserJwtSecret($user);
-
-                if (empty($secret)) {
-                    throw new \Exception(t('The user secret could not be returned'));
-                }
-
-                return !empty($secret) ? $secret : null;
-            },
-            'jwtAuthExpiration' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $expiration = $authorize->getTokenExpiration();
-
-                return !empty($expiration) ? $expiration : null;
-            },
-            'isJwtAuthSecretRevoked' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-                $revoked = $authorize->isJwtSecretRevoked($user);
-
-                return true == $revoked ? true : false;
-            },
-
         ];
 
         $mutationType = [
@@ -84,68 +38,28 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetToken($username, $password);
             },
-            'loginAnonymus' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                return $authorize->loginAndGetTokenFromAnonymus();
-            },
             'logout' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
-                $authorize->logout();
-                return $authorize->loginAndGetTokenFromAnonymus();
+                return $authorize->logout();
+            },
+            'refreshToken' => function ($root, $args) {
+                $authorize = App::make(\Helpers\Authorize::class);
+                return $authorize->refreshToken();
             },
             'forgotPassword' => function ($root, $args) {
                 $username = (string) $args['username'];
                 $currentLanguage = (string) $args['currentLanguage'];
 
-                $authorize = App::make(\Helpers\Authenticate::class);
-                return $authorize->forgotPassword($username, $currentLanguage);
+                $authenticate = App::make(\Helpers\Authenticate::class);
+                return $authenticate->forgotPassword($username, $currentLanguage);
             },
             'changePassword' => function ($root, $args) {
                 $password = (string) $args['password'];
                 $passwordConfirm = (string) $args['passwordConfirm'];
                 $token = (string) $args['token'];
 
-                $authorize = App::make(\Helpers\Authenticate::class);
-                return $authorize->changePassword($password, $passwordConfirm, $token);
-            },
-            'refreshJwtAuthToken' => function ($root, $args) {
-                $refreshToken = (string) $args['jwtRefreshToken'];
-
-                $authorize = App::make(\Helpers\Authorize::class);
-                $refreshToken = !empty($refreshToken) ? $authorize->validateToken($refreshToken) : null;
-
-                $id = isset($refreshToken->data->user->uID) ? $refreshToken->data->user->uID : 0;
-                if (empty($id)) {
-                    throw new \Exception(t('The provided refresh token is invalid'));
-                }
-
                 $authenticate = App::make(\Helpers\Authenticate::class);
-                $user = $authenticate->getUserByToken($refreshToken);
-
-                $authToken = $authorize->getToken($user, false);
-
-                return [
-                    'authToken' => $authToken,
-                    'refreshToken' => $authorize->getRefreshToken($user),
-                ];
-            },
-            'revokeJwtUserSecret' => function ($root, $args) {
-                $revoke = (bool) $args['revoke'];
-
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-
-                if ($revoke) {
-                    return $authorize->revokeUserSecret($user);
-                } else {
-                    return $authorize->unrevokeUserSecret($user);
-                }
-            },
-            'refreshJwtUserSecret' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-
-                return $authorize->issueNewUserSecret($user) !== null ? true : false;
+                return $authenticate->changePassword($password, $passwordConfirm, $token);
             },
         ];
 

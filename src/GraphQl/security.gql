@@ -6,24 +6,12 @@ type User {
 }
 
 type Auth {
-  "JWT Token that can be used in future requests for Authentication"
-  authToken: String
-  "'A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
-  refreshToken: String
+    authToken: String
+    error: String
 }
 
 type Query {
     me: User
-    "A JWT token that can be used in future requests for authentication/authorization"
-    jwtAuthToken: String
-    "A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers."
-    jwtRefreshToken: String
-    "A unique secret tied to the users JWT token that can be revoked or refreshed. Revoking the secret prevents JWT tokens from being issued to the user. Refreshing the token invalidates previously issued tokens, but allows new tokens to be issued."
-    jwtUserSecret: String
-    "The expiration for the JWT Token for the user. If not set custom for the user, it will use the default sitewide expiration setting"
-    jwtAuthExpiration: String
-    "Whether the JWT User secret has been revoked. If the secret has been revoked, auth tokens will not be issued until an admin, or user with proper capabilities re-issues a secret for the user."
-    isJwtAuthSecretRevoked: Boolean!
 }
 
 type Mutation {
@@ -35,8 +23,7 @@ type Mutation {
     password: String!
   ): Auth
 
-  "Login an anonymus user. Request for an authToken and User details in response"
-  loginAnonymus: Auth
+  refreshToken: Auth
 
   "Logout an user."
   logout: Auth
@@ -44,26 +31,11 @@ type Mutation {
   forgotPassword(
       username: String!
       currentLanguage: String!
-  ): Boolean
+  ): String
 
   changePassword(
       password: String!
       passwordConfirm: String!
       token: String!
-  ): Boolean
-
-  "Use a valid JWT Refresh token to retrieve a new JWT Auth Token"
-  refreshJwtAuthToken(
-      "A valid, previously issued JWT refresh token. If valid a new Auth token will be provided. If invalid, expired, revoked or otherwise invalid, a new AuthToken will not be provided."
-      jwtRefreshToken: String!
-  ): Auth
-
-  "revoke or unRevoke the token accordingly"
-  revokeJwtUserSecret(
-      "If true, this will revoke the users JWT secret. If false, this will unrevoke the JWT secret AND issue a new one. To revoke, the user must have proper capabilities to edit users JWT secrets."
-      revoke: Boolean
-  ): Boolean
-
-  "this will refresh the users JWT secret."
-  refreshJwtUserSecret: Boolean
+  ): String
 }
