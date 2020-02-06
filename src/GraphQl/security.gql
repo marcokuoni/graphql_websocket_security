@@ -1,7 +1,6 @@
 type User {
   uID: String
   uName: String
-  anonymus: Boolean
   uGroups: [Int]
 }
 
@@ -31,11 +30,11 @@ type Mutation {
   forgotPassword(
       username: String!
       currentLanguage: String!
-  ): String
+  ): [String]
 
   changePassword(
       password: String!
       passwordConfirm: String!
       token: String!
-  ): String
+  ): [String]
 }

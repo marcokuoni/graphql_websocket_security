@@ -159,9 +159,9 @@ class Authenticate
             }
 
             if ($error->has()) {
-                return new JsonResponse($error);
+                return $error->getList();
             } else {
-                return '';
+                return [];
             }
         }
     }
@@ -189,14 +189,14 @@ class Authenticate
                         $h = Core::make('helper/validation/identifier');
                         $h->deleteKey('UserValidationHashes', 'uHash', $token);
 
-                        return '';
+                        return [];
                     }
                 }
             }
         } else {
             $e->add(t('token is no longer valid, get a new email.'));
         }
-        return new JsonResponse($e);
+        return $e->getList();
     }
 
     protected function handleFailedLogin(LoginService $loginService, $username, $password, UserException $e)
