@@ -4,6 +4,7 @@ namespace Helpers;
 
 use Concrete\Core\Support\Facade\Application as App;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Concrete\Core\Error\UserMessageException;
 
 class Authorize
 {

@@ -4,7 +4,7 @@ return [
     'just_with_valid_token' => true,
     'auth_secret_key' => getenv('GRAPHQL_JWT_AUTH_SECRET_KEY'),
     'auth_refresh_secret_key' => getenv('GRAPHQL_JWT_AUTH_REFRESH_SECRET_KEY'),
-    'auth_expire' => 30,
+    'auth_expire' => 20,
     'auth_refresh_expire' => 86400 * 365,
     'log_requests' => false,
     'one_time_auto_refresh' => true,

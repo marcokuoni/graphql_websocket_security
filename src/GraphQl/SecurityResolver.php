@@ -15,14 +15,12 @@ class SecurityResolver
                 $returnUser = [
                     "uID" => '',
                     "uName" => '',
-                    "uGroups" => ''
                 ];
 
                 if (!empty($user)) {
                     $returnUser = [
                         "uID" => $user->getUserID(),
                         "uName" => $user->getUserName(),
-                        "uGroups" => $user->getUserGroups()
                     ];
                 }
 

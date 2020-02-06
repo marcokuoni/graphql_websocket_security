@@ -209,13 +209,23 @@ class Token
         );
 
         //https://tools.ietf.org/html/rfc7519#section-4.1
+
+        $returnUser = [];
+        if ($user) {
+            $returnUser = [
+                "uID" => $user->getUserID(),
+                "uName" => $user->getUserName(),
+                "uGroups" => $user->getUserGroups()
+            ];
+        }
+
         $token = [
             'iss'  => $baseUrl,
             'iat'  => gmmktime(),
             'nbf'  => $notBefore,
             'exp'  => $expiration,
             'data' => [
-                'user' => json_decode(json_encode($user), true)
+                'user' => $returnUser
             ],
         ];
 

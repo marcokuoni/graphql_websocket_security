@@ -1,7 +1,6 @@
 type User {
   uID: String
   uName: String
-  uGroups: [Int]
 }
 
 type Auth {
