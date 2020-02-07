@@ -152,7 +152,7 @@ class Authenticate
 
                     $mh->addParameter('siteName', tc('SiteName', App::make('site')->getSite()->getSiteName()));
                     $mh->load('forgot_password');
-                    //6@$mh->sendMail();
+                    @$mh->sendMail();
                 }
             } catch (\Exception $e) {
                 $error->add($e);
@@ -263,11 +263,8 @@ class Authenticate
             $anonymusUser = App::make(AnonymusUser::class);
             $anonymusUser->setSecret($secret);
         } else {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
-                $userInfo = $user->getUserInfoObject();
-                $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
-            }
+            $userInfo = $user->getUserInfoObject();
+            $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
         }
     }
 

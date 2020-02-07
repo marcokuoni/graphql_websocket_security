@@ -15,6 +15,8 @@ class GraphqlSecurity extends DashboardPageController
         if ((int) $currentUser->getUserID() === 1) {
             $auth_secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_secret_key');
             $this->set('auth_secret_key', $auth_secret_key);
+            $auth_refresh_secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key');
+            $this->set('auth_refresh_secret_key', $auth_refresh_secret_key);
         }
         $auth_expire = (int) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_expire');
         $this->set('auth_expire', $auth_expire);
@@ -41,6 +43,7 @@ class GraphqlSecurity extends DashboardPageController
                 $currentUser = App::make(User::class);
                 if ((int) $currentUser->getUserID() === 1) {
                     $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_secret_key', (string) $this->post('auth_secret_key'));
+                    $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key', (string) $this->post('auth_refresh_secret_key'));
                 }
 
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_expire', (int) $this->post('auth_expire'));

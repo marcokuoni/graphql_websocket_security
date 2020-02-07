@@ -65,6 +65,14 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label class="launch-tooltip" for="auth_secret_key" data-placement="right" title="<?= t('Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated') ?>"><?= t('Refresh Secret Key') ?></label>
+            <div class="form-group">
+                <div class="form-group">
+                    <?= $form->text('auth_refresh_secret_key', (string) $auth_refresh_secret_key !== '' ? (string) $auth_refresh_secret_key : t('You are not super user and not able to change or view the secret key')) ?>
+                </div>
+            </div>
+        </div>
 
         <div class="form-group">
             <label class="launch-tooltip" for="auth_expire" data-placement="right" title="<?= t('A standard token will expire after how long? Default would be after 300 sec') ?>"><?= t('Token Expire [s]') ?></label>
@@ -117,36 +125,4 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
     </div>
 
 </form>
-
-<script data-template='add-anonymus-table-row' type="text/template" charset="utf-8">
-    <div class="row" style="padding-bottom: 15px;">
-        <div class="col-xs-1"><%= row.uID %></div>
-        <div class="col-xs-3"><%= row.uName %></div>
-        <div class="col-xs-1"><%= row.uDateAdded.date %></div>
-        <div class="col-xs-1"><%= row.uLastIP %></div>
-        <div class="col-xs-3"><%= row.uLastAgent %></div>
-        <div class="col-xs-1"><%= row.uTimezone %></div>
-        <div class="col-xs-2"><%= row.uDefaultLanguage %></div>
-    </div>
-    <div class="row" style="padding-bottom: 15px;">
-        <div class="col-xs-1"></div>
-        <div class="col-xs-3"><%= row.uGraphqlJwtAuthSecret %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtAuthSecretRevoked %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtTokenNotBefore ? new Date(row.uGraphqlJwtTokenNotBefore * 1000).toLocaleString() : '' %></div>
-        <div class="col-xs-3"><%= row.uGraphqlJwtTokenExpires ? new Date(row.uGraphqlJwtTokenExpires * 1000).toLocaleString() : '' %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtRefreshTokenExpires ? new Date(row.uGraphqlJwtRefreshTokenExpires * 1000).toLocaleString() : '' %></div>
-        <div class="col-xs-2"><%= row.uGraphqlJwtLastRequest ? new Date(row.uGraphqlJwtLastRequest * 1000).toLocaleString() : '' %></div>
-    </div>
-    <div class="row">
-        <div class="col-xs-1"></div>
-        <div class="col-xs-3"><%= row.uGraphqlJwtLastRequestIp %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtLastRequestAgent %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtLastRequestTimezone %></div>
-        <div class="col-xs-3"><%= row.uGraphqlJwtLastRequestLanguage %></div>
-        <div class="col-xs-1"><%= row.uGraphqlJwtRequestCount %></div>
-        <div class="col-xs-2"></div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12"><hr></div>
-    </div>
 </script>
