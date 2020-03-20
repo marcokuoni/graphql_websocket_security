@@ -36,6 +36,14 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->loginAndGetToken($username, $password);
             },
+            'checkNonce' => function ($root, $args) {
+                $username = (string) $args['username'];
+                $nonce = (string) $args['nonce'];
+                $u2SAPass = (string) $args['u2SAPass'];
+
+                $authorize = App::make(\Helpers\Authorize::class);
+                return $authorize->checkNonce($username, $nonce, $u2SAPass);
+            },
             'logout' => function ($root, $args) {
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->logout();
