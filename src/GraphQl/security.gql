@@ -4,6 +4,8 @@ type User {
 }
 
 type Auth {
+    "When set, two factor authentication is activated"
+    nonce: String
     authToken: String
     error: String
 }
@@ -19,6 +21,12 @@ type Mutation {
     username: String!
     "The plain-text password for the user logging in."
     password: String!
+  ): Auth
+
+  checkNonce(
+      username: String!
+      nonce: String!
+      u2SAPass: String!
   ): Auth
 
   refreshToken: Auth

@@ -50,8 +50,6 @@ class Authenticate
 
         try {
             $user = $loginService->login($username, $password);
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->reset();
         } catch (UserPasswordResetException $e) {
             Session::set('uPasswordResetUserName', $username);
         } catch (UserException $e) {

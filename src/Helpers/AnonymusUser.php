@@ -7,17 +7,6 @@ use Concrete\Core\Foundation\ConcreteObject;
 
 class AnonymusUser extends ConcreteObject
 {
-    public function reset()
-    {
-        $config = App::make('config');
-
-        $config->save('concrete5_graphql_websocket_security::graphql_jwt.anonymus_secret', (String) '');
-        $config->save('concrete5_graphql_websocket_security::graphql_jwt.anonymus_refresh_count', (Int) 0);
-        $config->save('concrete5_graphql_websocket_security::graphql_jwt.anonymus_revoked', (Boolean) false);
-        $config->save('concrete5_graphql_websocket_security::graphql_jwt.anonymus_token_expires', (Int) 0);
-        $config->save('concrete5_graphql_websocket_security::graphql_jwt.anonymus_refresh_token_expires', (Int) 0);
-    }
-
     public function setSecret($secret)
     {
         $config = App::make('config');

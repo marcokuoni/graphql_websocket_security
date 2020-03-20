@@ -83,6 +83,15 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             </div>
         </div>
 
+        <div class="form-group">
+            <label class="launch-tooltip" for="auth_refresh_expire" data-placement="right" title="<?= t('A refresh token will expire after how long? Default would be after 86400 * 365 sec') ?>"><?= t('Refresh Token Expire [s]') ?></label>
+            <div class="form-group">
+                <div class="form-group">
+                    <?= $form->text('auth_refresh_expire', (int) $auth_refresh_expire > 0 ? (int) $auth_refresh_expire : (86400 * 365)) ?>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group" style="margin-top: 30px;">
             <label class="launch-tooltip" data-placement="right" title="<?= t('Rejects all API requests as long as they do not have a valid token in it. So you need to send valid tokens with the initinal html request for the client application.') ?>"><?= t('API call just with valid token') ?></label>
             <div class="radio">
@@ -112,6 +121,69 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             <div class="radio">
                 <label>
                     <?= $form->radio('log_requests', 'no', !$log_requests) ?>
+                    <span><?= t('Off') ?></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 30px;">
+            <label class="launch-tooltip" data-placement="right" title="<?= t('If the clients starts a request the token could expire during transaction, cause of latency. So we give him one second change to refresh his token') ?>"><?= t('One Time Auto Refresh') ?></label>
+            <div class="radio">
+                <label>
+                    <?= $form->radio('one_time_auto_refresh', 'yes', $one_time_auto_refresh) ?>
+                    <span><?= t('On') ?></span>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label>
+                    <?= $form->radio('one_time_auto_refresh', 'no', !$one_time_auto_refresh) ?>
+                    <span><?= t('Off') ?></span>
+                </label>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend><?= t('Refresh Cookie Settings') ?></legend>
+        <div class="form-group">
+            <label class="launch-tooltip" for="cookie_name" data-placement="right" title="<?= t('How is the refresh cookie named. Use a not obviously name') ?>"><?= t('Cookie Name') ?></label>
+            <div class="form-group">
+                <div class="form-group">
+                    <?= $form->text('cookie_name', (string) $cookie_name !== '' ? (string) $cookie_name : 'mainApp') ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="launch-tooltip" for="cookie_lifetime" data-placement="right" title="<?= t('How long should the refresh token be valid? Default would be after 86400 * 365 sec') ?>"><?= t('Cookie Lifetime') ?></label>
+            <div class="form-group">
+                <div class="form-group">
+                    <?= $form->text('cookie_lifetime', (string) $cookie_lifetime !== '' ? (int) $cookie_lifetime : (86400 * 365)) ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="launch-tooltip" for="cookie_domain" data-placement="right" title="<?= t('The domain who can change the cookie') ?>"><?= t('Cookie Domain') ?></label>
+            <div class="form-group">
+                <div class="form-group">
+                    <?= $form->text('cookie_domain', (string) $cookie_domain !== '' ? (string) $cookie_domain : '') ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 30px;">
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Just https connection is accepted') ?>"><?= t('Cookie Secure') ?></label>
+            <div class="radio">
+                <label>
+                    <?= $form->radio('cookie_secure', 'yes', $cookie_secure) ?>
+                    <span><?= t('On') ?></span>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label>
+                    <?= $form->radio('cookie_secure', 'no', !$cookie_secure) ?>
                     <span><?= t('Off') ?></span>
                 </label>
             </div>
