@@ -84,10 +84,10 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group">
-            <label class="launch-tooltip" for="auth_refresh_expire" data-placement="right" title="<?= t('A refresh token will expire after how long? Default would be after 86400 * 365 sec') ?>"><?= t('Refresh Token Expire [s]') ?></label>
+            <label class="launch-tooltip" for="auth_refresh_expire" data-placement="right" title="<?= t('A refresh token will expire after how long? Default would be after 7200 sec') ?>"><?= t('Refresh Token Expire [s]') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('auth_refresh_expire', (int) $auth_refresh_expire > 0 ? (int) $auth_refresh_expire : (86400 * 365)) ?>
+                    <?= $form->text('auth_refresh_expire', (int) $auth_refresh_expire > 0 ? (int) $auth_refresh_expire : (7200)) ?>
                 </div>
             </div>
         </div>
@@ -155,10 +155,10 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group">
-            <label class="launch-tooltip" for="cookie_lifetime" data-placement="right" title="<?= t('How long should the refresh token be valid? Default would be after 86400 * 365 sec') ?>"><?= t('Cookie Lifetime') ?></label>
+            <label class="launch-tooltip" for="cookie_lifetime" data-placement="right" title="<?= t('How long should the refresh token be valid? Default would be after 7200 sec') ?>"><?= t('Cookie Lifetime') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('cookie_lifetime', (string) $cookie_lifetime !== '' ? (int) $cookie_lifetime : (86400 * 365)) ?>
+                    <?= $form->text('cookie_lifetime', (string) $cookie_lifetime !== '' ? (int) $cookie_lifetime : (7200)) ?>
                 </div>
             </div>
         </div>
