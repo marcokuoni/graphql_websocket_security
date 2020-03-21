@@ -6,6 +6,7 @@ type User {
 type Auth {
     "When set, two factor authentication is activated"
     nonce: String
+    "Includes the current uID and uName in payload"
     authToken: String
     error: String
 }
@@ -15,20 +16,22 @@ type Query {
 }
 
 type Mutation {
-  "Login a user. Request for an authToken and User details in response"
+  "Login a user. Request for an authToken and refreshToken in response"
   login(
-    "The username used for login. Typically a unique or email address depending on specific configuration"
     username: String!
-    "The plain-text password for the user logging in."
     password: String!
   ): Auth
 
+  "if you use https://www.concrete5.org/marketplace/addons/two-factor-login-security you can check the nonce with this function"
   checkNonce(
       username: String!
+      "Comming from the login function"
       nonce: String!
+      "Inserted by the client from the google app"
       u2SAPass: String!
   ): Auth
 
+  "Use this function to refresh your outdated token"
   refreshToken: Auth
 
   "Logout an user."
