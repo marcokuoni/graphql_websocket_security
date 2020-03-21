@@ -423,7 +423,7 @@ class Authenticate
             $currentTime = time();
             $userAgent = $request->server->get('HTTP_USER_AGENT');
 
-            if ((int) $user->getUserID() > 0) {
+            if ($user && (int) $user->getUserID() > 0) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_last_request", $currentTime);
                 $userInfo->setAttribute("graphql_jwt_last_request_ip", $ip);
@@ -432,7 +432,17 @@ class Authenticate
                 $userInfo->setAttribute("graphql_jwt_last_request_language", $language);
                 $userInfo->setAttribute(
                     "graphql_jwt_request_count",
-                    $userInfo->getAttribute("graphql_jwt_request_count") > 0 ? ($userInfo->getAttribute("graphql_jwt_request_count") + 1) : 1
+                    $userInfo->getAttribute("graphql_jwt_request_count") + 1
+                );
+            } else {
+                $anonymusUser = App::make(AnonymusUser::class);
+                $anonymusUser->setLastRequest($currentTime);
+                $anonymusUser->setLastRequestIp($ip);
+                $anonymusUser->setLastRequestAgent($userAgent);
+                $anonymusUser->setLastRequestTimezone($timezone);
+                $anonymusUser->setLastRequestLanguage($language);
+                $anonymusUser->setRequestCount(
+                    $anonymusUser->getRequestCount() + 1
                 );
             }
         }

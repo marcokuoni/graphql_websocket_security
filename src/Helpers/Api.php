@@ -15,16 +15,14 @@ class Api extends Controller
     public function view()
     {
         $config = App::make('config');
-        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token')) {
-            try {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
+        try {
+            $authorize = App::make(\Helpers\Authorize::class);
+            $user = $authorize->authenticated();
 
-                if (!empty($user->uID)) {
-                    $authenticate = App::make(\Helpers\Authenticate::class);
-                    $authenticate->logRequest($user);
-                }
-            } catch (\Exception $e) {
+            $authenticate = App::make(\Helpers\Authenticate::class);
+            $authenticate->logRequest($user);
+        } catch (\Exception $e) {
+            if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token')) {
                 return new JsonResponse($e, 401);
             }
         }

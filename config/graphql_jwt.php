@@ -22,4 +22,10 @@ return [
     'anonymus_token_expires' => 0,
     'anonymus_refresh_token_expires' => 0,
     'anonymus_get_not_before' => 0,
+    'anonymus_last_request' => 0,
+    'anonymus_last_request_ip' => '',
+    'anonymus_last_request_agent' => '',
+    'anonymus_last_request_timezone' => '',
+    'anonymus_last_request_language' => '',
+    'anonymus_request_count' => 0
 ];
