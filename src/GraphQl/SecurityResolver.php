@@ -48,10 +48,6 @@ class SecurityResolver
                 $authorize = App::make(\Helpers\Authorize::class);
                 return $authorize->logout();
             },
-            'refreshToken' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                return $authorize->refreshToken();
-            },
             'forgotPassword' => function ($root, $args) {
                 $username = (string) $args['username'];
                 $currentLanguage = (string) $args['currentLanguage'];

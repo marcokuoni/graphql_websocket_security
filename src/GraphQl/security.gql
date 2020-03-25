@@ -31,9 +31,6 @@ type Mutation {
       u2SAPass: String!
   ): Auth
 
-  "Use this function to refresh your outdated token"
-  refreshToken: Auth
-
   "Logout an user."
   logout: Auth
 

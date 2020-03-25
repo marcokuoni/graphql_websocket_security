@@ -42,6 +42,7 @@ class Controller extends Package
 
         $this->app->make(RouterInterface::class)->register('/graphql', 'Helpers\Api::view');
         $this->app->make(RouterInterface::class)->register('/refresh_token', 'Helpers\Authorize::refreshToken');
+        $this->app->make(RouterInterface::class)->register('/login_and_get_token_from_Anonymus', 'Helpers\Authorize::loginAndGetTokenFromAnonymus');
         $this->app->make(RouterInterface::class)->register('/logout_token', 'Helpers\Authorize::logoutToken');
 
 
