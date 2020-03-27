@@ -22,7 +22,7 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '1.3.2'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '2.1.4';
+    protected $pkgVersion = '2.1.5';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';
@@ -42,7 +42,7 @@ class Controller extends Package
 
         $this->app->make(RouterInterface::class)->register('/graphql', 'Helpers\Api::view');
         $this->app->make(RouterInterface::class)->register('/refresh_token', 'Helpers\Authorize::refreshToken');
-        $this->app->make(RouterInterface::class)->register('/login_and_get_token_from_Anonymus', 'Helpers\Authorize::loginAndGetTokenFromAnonymus');
+        $this->app->make(RouterInterface::class)->register('/login_and_get_token_from_anonymus', 'Helpers\Authorize::loginAndGetTokenFromAnonymus');
         $this->app->make(RouterInterface::class)->register('/logout_token', 'Helpers\Authorize::logoutToken');
 
 

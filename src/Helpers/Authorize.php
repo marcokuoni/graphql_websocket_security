@@ -131,7 +131,7 @@ class Authorize
         return ['error' => $error, 'authToken' => $accessToken, 'none' => $token];
     }
 
-    public function loginAndGetTokenFromAnonymus()
+    public function loginAndGetTokenFromAnonymus($callAsFunction = false)
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $user = $authenticate->authenticateAnonymus();
@@ -140,7 +140,11 @@ class Authorize
         $accessToken = $token->createAccessToken($user);
         $token->sendRefreshAccessToken($user);
 
-        return !empty($accessToken) ? $accessToken : null;
+        if ($callAsFunction) {
+            return !empty($accessToken) ? $accessToken : null;
+        } else {
+            return new JsonResponse($accessToken);
+        }
     }
 
     public function logout()
