@@ -154,9 +154,7 @@ class Authorize
         $authenticate = App::make(\Helpers\Authenticate::class);
         $returnValue = $authenticate->deauthenticateUser();
 
-
-        $config = App::make('config');
-        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token') && $returnValue) {
+        if ($returnValue) {
             try {
                 $anonymusToken = $this->loginAndGetTokenFromAnonymus();
             } catch (\Exception $e) {
