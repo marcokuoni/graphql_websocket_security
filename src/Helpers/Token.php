@@ -7,6 +7,7 @@ use Firebase\JWT\ExpiredException;
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Error\UserMessageException;
 use Zend\Http\PhpEnvironment\Request;
+use Concrete\Core\User\UserInfoRepository;
 
 class Token
 {
@@ -212,13 +213,14 @@ class Token
 
         $returnUser = [];
         if ($user) {
+            $userInfo = App::make(UserInfoRepository::class)->getByID((int) $user->getUserID());
             $returnUser = [
                 "uID" => $user->getUserID(),
                 "uName" => $user->getUserName(),
                 "uGroups" => array_map(function ($item) {
                     return $item->getGroupDisplayName();
-                }, $user->getUserObject()->getUserGroupObjects()),
-                "uAvatar" => $user->getUserAvatar()->getPath()
+                }, $user->getUserGroupObjects()),
+                "uAvatar" => $userInfo->getUserAvatar()->getPath()
             ];
         }
 
