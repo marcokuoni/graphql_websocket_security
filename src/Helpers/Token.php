@@ -215,7 +215,9 @@ class Token
             $returnUser = [
                 "uID" => $user->getUserID(),
                 "uName" => $user->getUserName(),
-                "uGroups" => $user->getUserObject()->getUserGroupObjects(),
+                "uGroups" => array_map(function ($item) {
+                    return $item->getGroupDisplayName();
+                }, $user->getUserObject()->getUserGroupObjects()),
                 "uAvatar" => $user->getUserAvatar()->getPath()
             ];
         }
