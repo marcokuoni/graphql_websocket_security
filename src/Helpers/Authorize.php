@@ -156,7 +156,7 @@ class Authorize
 
         if ($returnValue) {
             try {
-                $anonymusToken = $this->loginAndGetTokenFromAnonymus();
+                $anonymusToken = $this->loginAndGetTokenFromAnonymus(true);
             } catch (\Exception $e) {
                 return ['error' => $e->getMessage(), 'authToken' => ''];
             }
