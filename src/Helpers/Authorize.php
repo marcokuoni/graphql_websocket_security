@@ -59,6 +59,10 @@ class Authorize
                     $userInfo->setAttribute('tsa_login_nonce', $nonce);
                 }
             }
+
+            if ($user->isError()) {
+                $error = t('Unknown login error occurred. Please try again.');
+            }
         } catch (\Exception $e) {
             $error = $e->getMessage();
         }
