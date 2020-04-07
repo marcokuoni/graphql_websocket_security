@@ -101,7 +101,7 @@ class Authenticate
         return true;
     }
 
-    public function forgotPassword($username, $currentLanguage)
+    public function forgotPassword($username, $changePasswordUrl)
     {
         $error = App::make('helper/validation/error');
 
@@ -127,7 +127,7 @@ class Authenticate
                     $h = new ValidationHash();
                     $uHash = $h->add($oUser->getUserID(), intval(UVTYPE_CHANGE_PASSWORD), true);
                     Log::addDebug($uHash);
-                    $changePassURL = View::url("/#!/{$currentLanguage}/auth/change-password/{$uHash}");
+                    $changePassURL = "{$changePasswordUrl}/{$uHash}";
 
                     $mh->addParameter('changePassURL', $changePassURL);
 

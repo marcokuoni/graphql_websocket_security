@@ -50,10 +50,10 @@ class SecurityResolver
             },
             'forgotPassword' => function ($root, $args) {
                 $username = (string) $args['username'];
-                $currentLanguage = (string) $args['currentLanguage'];
+                $changePasswordUrl = (string) $args['changePasswordUrl'];
 
                 $authenticate = App::make(\Helpers\Authenticate::class);
-                return $authenticate->forgotPassword($username, $currentLanguage);
+                return $authenticate->forgotPassword($username, $changePasswordUrl);
             },
             'changePassword' => function ($root, $args) {
                 $password = (string) $args['password'];
