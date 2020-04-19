@@ -9,7 +9,6 @@ use Concrete\Core\Support\Facade\UserInfo;
 use Concrete\Core\Support\Facade\Config;
 use TsaModels\Authenticator as Authenticator;
 use TsaModels\SettingsManager as SettingsManager;
-use Concrete\Core\Error\UserMessageException;
 
 class Authorize
 {
@@ -163,7 +162,8 @@ class Authorize
                 $accessToken = $tokenHelper->createAccessToken($user);
                 $tokenHelper->sendRefreshAccessToken($user);
             } else {
-                return $this->logoutThroughRest();
+                $this->logoutThroughRest();
+                return new JsonResponse(['error' => 'Session Expired', 'authToken' => '']);
             }
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage(), 'authToken' => '']);
