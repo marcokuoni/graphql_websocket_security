@@ -3,7 +3,6 @@
 namespace Helpers;
 
 use Firebase\JWT\JWT;
-use Firebase\JWT\ExpiredException;
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Error\UserMessageException;
 use Zend\Http\PhpEnvironment\Request;
@@ -57,23 +56,6 @@ class Token
 
         $cookie = App::make('cookie');
         $cookie->clear($cookie_name);
-
-        $authenticate = App::make(\Helpers\Authenticate::class);
-    }
-
-    /**
-     * Main validation function, this function try to get the Authentication
-     * headers and decoded.
-     *
-     * @param string $token The encoded JWT Token
-     *
-     * @throws \Exception
-     * @return User 
-     */
-    public function validateAccess()
-    {
-        $authHeader = $this->getAuthHeader();
-        return $this->validateToken($authHeader);
     }
 
     public function validateRefreshAccess()
@@ -93,7 +75,6 @@ class Token
     private function createRefreshToken($user)
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
-        $authenticate->setRefreshCount($user, 0);
         $notBefore = $this->checkIfUserCanCreateToken($user);
         $token = $this->createToken($user, $notBefore, $this->getRefreshTokenExpiration());
 
@@ -106,19 +87,13 @@ class Token
         return !empty($token) ? $token : null;
     }
 
-    private function validateToken($authHeader, $isRefresh = false)
+    public function validateToken($token, $isRefresh = false)
     {
-        if (empty($authHeader)) {
-            return false;
-        }
+        $authenticate = App::make(\Helpers\Authenticate::class);
+        $user = null;
 
-        if (!$isRefresh) {
-            list($token) = sscanf($authHeader, 'Bearer %s');
-            if (!isset($token)) {
-                list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
-            }
-        } else {
-            $token = $authHeader;
+        if (empty($token)) {
+            return false;
         }
 
         $secret = '';
@@ -134,12 +109,8 @@ class Token
 
         try {
             JWT::$leeway = 60;
-            try {
-                $token = !empty($token) ? JWT::decode($token, $secret, ['HS256']) : null;
-            } catch (ExpiredException $e) {
-                //if the token gets expired during transaction you can do a one time refresh
-                $token = $this->checkForAutoRefresh($isRefresh, $secret);
-            }
+
+            $token = !empty($token) ? JWT::decode($token, $secret, ['HS256']) : null;
 
             $baseUrl = sprintf(
                 "%s://%s",
@@ -150,17 +121,20 @@ class Token
                 throw new \Exception(t('The iss do not match with this server'));
             }
 
-            $authenticate = App::make(\Helpers\Authenticate::class);
-            $currentUser = $authenticate->getCurrentUser();
+            $user = $authenticate->getUserByToken($token);
 
-            if (!isset($token->data->user->user_secret) || $this->getUserJwtSecret($currentUser) !== $token->data->user->user_secret) {
+            if (!isset($token->data->user->user_secret) || $this->getUserJwtSecret($user) !== $token->data->user->user_secret) {
                 throw new \Exception(t('The User Secret does not match or has been revoked for this user'));
             }
         } catch (\Exception $error) {
-            throw new UserMessageException(t('The JWT Token is invalid'), 401);
+            if ($error->getMessage() === 'Expired token') {
+                throw new UserMessageException(t('Expired token'), 401);
+            } else {
+                throw new UserMessageException(t('The JWT Token is invalid'), 401);
+            }
         }
 
-        return $token;
+        return $user;
     }
 
     /**
@@ -168,9 +142,10 @@ class Token
      *
      * @return mixed|string
      */
-    private function getAuthHeader()
+    public function getTokenFromAuthHeader()
     {
         $request = new Request();
+        $token = '';
         $authHeader = $request->getHeader('authorization') ? $request->getHeader('authorization')->toString() : null;
         if (!isset($authHeader)) {
             $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
@@ -178,20 +153,18 @@ class Token
         $redirectAuthHeader = isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
         $authHeader = $authHeader !== false ? $authHeader : ($redirectAuthHeader !== false ? $redirectAuthHeader : null);
 
-        return $authHeader;
+        if ($authHeader !== '') {
+            list($token) = sscanf($authHeader, 'Bearer %s');
+            if (!isset($token)) {
+                list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
+            }
+        }
+
+        return $token;
     }
 
     private function checkIfUserCanCreateToken($user)
     {
-        //only tokens for the person who is logged in at the moment
-        $authenticate = App::make(\Helpers\Authenticate::class);
-        $currentUser = $authenticate->getCurrentUser();
-        if (!empty($currentUser)) {
-            if (empty($user) || (int) $currentUser->getUserID() !== (int) $user->getUserID() || 0 === (int) $user->getUserID()) {
-                throw new UserMessageException(t('Only the user requesting a token can get a token issued for them'));
-            }
-        }
-
         $notBefore = $this->getNotBefore($user);
 
         if ($this->isJwtSecretRevoked($user)) {
@@ -288,7 +261,7 @@ class Token
     /**
      * Given a User ID, returns the user's JWT secret
      *
-     * @param User|AnonymusUser $user
+     * @param User $user
      *
      * @return mixed|string
      */
@@ -321,7 +294,7 @@ class Token
     /**
      * Given a User, returns whether their JWT secret has been revoked or not.
      *
-     * @param User|AnonymusUser $user
+     * @param User $user
      *
      * @return bool
      */
@@ -334,7 +307,7 @@ class Token
     /**
      * Given a User ID, issue a new JWT Auth Secret
      *
-     * @param User|AnonymusUser $user The user the secret is being issued for
+     * @param User $user The user the secret is being issued for
      *
      * @return string $secret The JWT User secret for the user.
      */
@@ -384,34 +357,5 @@ class Token
             throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
         return $secret_key;
-    }
-
-    private function checkForAutoRefresh($isRefresh, $secret)
-    {
-        $config = App::make('config');
-        $autoRefresh = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.one_time_auto_refresh');
-
-        if ($autoRefresh && !$isRefresh) {
-            try {
-                $validatedToken = $this->validateRefreshAccess();
-
-                $authenticate = App::make(\Helpers\Authenticate::class);
-                $user = $authenticate->getUserByToken($validatedToken);
-
-                if (!$authenticate->getRefreshCount($user) || $authenticate->getRefreshCount($user) === 0) {
-                    $token = $this->createAccessToken($user);
-                    $this->sendRefreshAccessToken($user);
-                    $token = !empty($token) ? JWT::decode($token, $secret, ['HS256']) : null;
-                    $authenticate->setRefreshCount($user, 1);
-                    return $token;
-                } else {
-                    throw new \Exception(t('user had already an refresh'));
-                }
-            } catch (\Exception $e) {
-                throw new \Exception(t('no valid refresh Token'));
-            }
-        } else {
-            throw new \Exception(t('Expired Token'));
-        }
     }
 }

@@ -22,7 +22,7 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '1.3.2'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '2.1.5';
+    protected $pkgVersion = '3.0.0';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';
@@ -37,14 +37,11 @@ class Controller extends Package
 
         $this->app->singleton('\Helpers\Authorize');
         $this->app->singleton('\Helpers\Authenticate');
-        $this->app->singleton('\Helpers\AnonymusUser');
         $this->app->singleton('\Helpers\Token');
 
         $this->app->make(RouterInterface::class)->register('/graphql', 'Helpers\Api::view');
         $this->app->make(RouterInterface::class)->register('/refresh_token', 'Helpers\Authorize::refreshToken');
-        $this->app->make(RouterInterface::class)->register('/login_and_get_token_from_anonymus', 'Helpers\Authorize::loginAndGetTokenFromAnonymus');
-        $this->app->make(RouterInterface::class)->register('/logout_token', 'Helpers\Authorize::logoutToken');
-
+        $this->app->make(RouterInterface::class)->register('/logout', 'Helpers\Authorize::logoutThroughRest');
 
         \GraphQl\Security::start();
     }
@@ -103,7 +100,6 @@ class Controller extends Package
         $this->installUserAttribute('graphql_jwt_last_request_timezone', 'Last request timezone', $text, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_last_request_language', 'Last request language', $text, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_request_count', 'Request count', $number, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_auth_refresh_count', 'Refresh count', $number, $pkg, $custSet);
     }
 
     private function installUserAttribute($handle, $name, $type, $pkg, $set, $data = null)

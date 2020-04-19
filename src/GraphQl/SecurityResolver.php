@@ -8,25 +8,7 @@ class SecurityResolver
 {
     public static function get()
     {
-        $queryType = [
-            'me' => function ($root, $args) {
-                $authorize = App::make(\Helpers\Authorize::class);
-                $user = $authorize->authenticated();
-                $returnUser = [
-                    "uID" => '',
-                    "uName" => '',
-                ];
-
-                if (!empty($user)) {
-                    $returnUser = [
-                        "uID" => $user->getUserID(),
-                        "uName" => $user->getUserName(),
-                    ];
-                }
-
-                return $returnUser;
-            },
-        ];
+        $queryType = [];
 
         $mutationType = [
             'login' => function ($root, $args) {

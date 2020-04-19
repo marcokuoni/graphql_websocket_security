@@ -1,17 +1,15 @@
 <?php
-
 namespace Helpers;
 
 use Concrete\Core\Support\Facade\Application as App;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Concrete\Core\Error\UserMessageException;
-use Core;
-use User;
-use UserInfo;
-use Config;
-use Exception;
+use Concrete\Core\Support\Facade\Application as Core;
+use Concrete\Core\User\User;
+use Concrete\Core\Support\Facade\UserInfo;
+use Concrete\Core\Support\Facade\Config;
 use TsaModels\Authenticator as Authenticator;
 use TsaModels\SettingsManager as SettingsManager;
+use Concrete\Core\Error\UserMessageException;
 
 class Authorize
 {
@@ -46,9 +44,9 @@ class Authorize
                 $tsa = $userInfo->getAttribute('two_step_auth_data');
                 if (!$tsa || !is_object($tsa) || !$tsa->getActivateTwoStep()) {
                     $user = $authenticate->authenticateUser($username, $password);
-                    $tokenClass = App::make(\Helpers\Token::class);
-                    $accessToken = $tokenClass->createAccessToken($user);
-                    $tokenClass->sendRefreshAccessToken($user);
+                    $tokenHelper = App::make(\Helpers\Token::class);
+                    $accessToken = $tokenHelper->createAccessToken($user);
+                    $tokenHelper->sendRefreshAccessToken($user);
                 } else {
                     // user name and password were correct, let's create a token and save it in a user attribute
                     $rand = Core::make('helper/validation/identifier')->getString(10);
@@ -82,7 +80,7 @@ class Authorize
             // This is second screen with GA code
             if (!isset($user) || !isset($nonce) || !isset($u2SAPass)) {
                 // somebody got here directly without going through the first screen so there are no user name and token
-                throw new Exception(t('No user was defined. Please try again.'));
+                throw new \Exception(t('No user was defined. Please try again.'));
             }
             if (Config::get('concrete.user.registration.email_registration')) {
                 $user = UserInfo::getByEmail($user)->getUserObject();
@@ -92,7 +90,7 @@ class Authorize
 
             // the user for that user name doesn't exist
             if (!is_object($user) || !($user instanceof User) || $user->isError()) {
-                throw new Exception(t('Your session has expired. Please sign in again.'));
+                throw new \Exception(t('Your session has expired. Please sign in again.'));
             }
 
             $post = [
@@ -114,7 +112,7 @@ class Authorize
                         throw new \Exception($ip_service->getErrorMessage());
                     }
                 }
-                throw new Exception($ret['returned']);
+                throw new \Exception($ret['returned']);
             } elseif ($ret['status'] === 'success') {
                 $user = $ret['returned'];
                 // Must log the user in before setting the cookie and returning to login controller
@@ -124,84 +122,48 @@ class Authorize
                 // if (isset($post['uMaintainLogin']) && $post['uMaintainLogin']) {
                 //     $user->setAuthTypeCookie('concrete');
                 // }
-                $tokenClass = App::make(\Helpers\Token::class);
-                $accessToken = $tokenClass->createAccessToken($user);
-                $tokenClass->sendRefreshAccessToken($user);
+                $tokenHelper = App::make(\Helpers\Token::class);
+                $accessToken = $tokenHelper->createAccessToken($user);
+                $tokenHelper->sendRefreshAccessToken($user);
             }
         } catch (\Exception $e) {
             $error = $e->getMessage();
         }
 
-        return ['error' => $error, 'authToken' => $accessToken, 'none' => $token];
-    }
-
-    public function loginAndGetTokenFromAnonymus($callAsFunction = false)
-    {
-        $authenticate = App::make(\Helpers\Authenticate::class);
-        $user = $authenticate->authenticateAnonymus();
-
-        $token = App::make(\Helpers\Token::class);
-        $accessToken = $token->createAccessToken($user);
-        $token->sendRefreshAccessToken($user);
-
-        if ($callAsFunction) {
-            return !empty($accessToken) ? $accessToken : null;
-        } else {
-            return new JsonResponse($accessToken);
-        }
+        return ['error' => $error, 'authToken' => $accessToken, 'nonce' => $token];
     }
 
     public function logout()
     {
-        $token = App::make(\Helpers\Token::class);
-        $token->clearRefreshAccessToken();
+        $tokenHelper = App::make(\Helpers\Token::class);
+        $tokenHelper->clearRefreshAccessToken();
         $authenticate = App::make(\Helpers\Authenticate::class);
-        $returnValue = $authenticate->deauthenticateUser();
+        $authenticate->deauthenticateUser();
 
-        if ($returnValue) {
-            try {
-                $anonymusToken = $this->loginAndGetTokenFromAnonymus(true);
-            } catch (\Exception $e) {
-                return ['error' => $e->getMessage(), 'authToken' => ''];
-            }
-
-            return ['error' => '', 'authToken' => $anonymusToken];
-        }
-
-        return $returnValue ? ['error' => false, 'authToken' => true] : ['error' => true, 'authToken' => false];
+        return true;
     }
 
-    public function logoutToken()
+    public function logoutThroughRest()
     {
         return new JsonResponse($this->logout());
     }
 
-    public function authenticated()
+    public function authenticated($token)
     {
-        $token = App::make(\Helpers\Token::class);
-        $validatedToken = $token->validateAccess();
-
-        if ($validatedToken) {
-            $authenticate = App::make(\Helpers\Authenticate::class);
-            return $authenticate->getUserByToken($validatedToken);
-        }
-        throw new \UserMessageException(t('Unauthenticated!'), 401);
-        return false;
+        $tokenHelper = App::make(\Helpers\Token::class);
+        return $tokenHelper->validateToken($token);
     }
 
     public function refreshToken()
     {
         try {
-            $token = App::make(\Helpers\Token::class);
-            $validatedToken = $token->validateRefreshAccess();
-            if ($validatedToken) {
-                $authenticate = App::make(\Helpers\Authenticate::class);
-                $user = $authenticate->getUserByToken($validatedToken);
-
-                $accessToken = $token->createAccessToken($user);
-                $token->sendRefreshAccessToken($user);
+            $tokenHelper = App::make(\Helpers\Token::class);
+            $user = $tokenHelper->validateRefreshAccess();
+            if ($user) {
+                $accessToken = $tokenHelper->createAccessToken($user);
+                $tokenHelper->sendRefreshAccessToken($user);
             } else {
-                return $this->logoutToken();
+                return $this->logoutThroughRest();
             }
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage(), 'authToken' => '']);

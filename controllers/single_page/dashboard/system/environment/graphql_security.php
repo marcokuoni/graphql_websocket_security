@@ -27,12 +27,6 @@ class GraphqlSecurity extends DashboardPageController
         $log_requests = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_requests');
         $this->set('log_requests', $log_requests);
 
-        $just_with_valid_token = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token');
-        $this->set('just_with_valid_token', $just_with_valid_token);
-
-        $one_time_auto_refresh = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.one_time_auto_refresh');
-        $this->set('one_time_auto_refresh', $one_time_auto_refresh);
-
         $cookie_name = (String) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_name');
         $this->set('cookie_name', $cookie_name);
 
@@ -56,8 +50,6 @@ class GraphqlSecurity extends DashboardPageController
             if ($this->isPost()) {
                 $config = $this->app->make('config');
                 $lr = $this->post('log_requests') === 'yes';
-                $jwvt = $this->post('just_with_valid_token') === 'yes';
-                $otar = $this->post('one_time_auto_refresh') === 'yes';
                 $cs = $this->post('cookie_secure') === 'yes';
                 $auth_expire = (int) $this->post('auth_expire');
                 $auth_refresh_expire = (int) $this->post('auth_refresh_expire');
@@ -93,8 +85,6 @@ class GraphqlSecurity extends DashboardPageController
 
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure', $cs);
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.log_requests', $lr);
-                $config->save('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token', $jwvt);
-                $config->save('concrete5_graphql_websocket_security::graphql_jwt.one_time_auto_refresh', $otar);
 
                 $this->flash('success', t('Settings updated.'));
                 $this->redirect('/dashboard/system/environment/graphql_security', 'view');

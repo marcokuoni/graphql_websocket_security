@@ -93,23 +93,6 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         </div>
 
         <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Rejects all API requests as long as they do not have a valid token in it. So you need to send valid tokens with the initinal html request for the client application.') ?>"><?= t('API call just with valid token') ?></label>
-            <div class="radio">
-                <label>
-                    <?= $form->radio('just_with_valid_token', 'yes', $just_with_valid_token) ?>
-                    <span><?= t('On') ?></span>
-                </label>
-            </div>
-
-            <div class="radio">
-                <label>
-                    <?= $form->radio('just_with_valid_token', 'no', !$just_with_valid_token) ?>
-                    <span><?= t('Off, i know what i am doing') ?></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 30px;">
             <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to a concrete5 or anonymous user') ?>"><?= t('Log User Requests') ?></label>
             <div class="radio">
                 <label>
@@ -121,23 +104,6 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             <div class="radio">
                 <label>
                     <?= $form->radio('log_requests', 'no', !$log_requests) ?>
-                    <span><?= t('Off') ?></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('If the clients starts a request the token could expire during transaction, cause of latency. So we give him one second change to refresh his token') ?>"><?= t('One Time Auto Refresh') ?></label>
-            <div class="radio">
-                <label>
-                    <?= $form->radio('one_time_auto_refresh', 'yes', $one_time_auto_refresh) ?>
-                    <span><?= t('On') ?></span>
-                </label>
-            </div>
-
-            <div class="radio">
-                <label>
-                    <?= $form->radio('one_time_auto_refresh', 'no', !$one_time_auto_refresh) ?>
                     <span><?= t('Off') ?></span>
                 </label>
             </div>

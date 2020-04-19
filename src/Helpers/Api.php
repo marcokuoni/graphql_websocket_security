@@ -18,21 +18,19 @@ class Api extends Controller
         if (Request\method_is('post')) {
             Response\cors();
 
-            $config = App::make('config');
-            try {
-                $user = null;
-
-                if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token')) {
+            $tokenHelper = App::make(\Helpers\Token::class);
+            $token = $tokenHelper->getTokenFromAuthHeader();
+            if ($token) {
+                try {
+                    $user = null;
                     $authorize = App::make(\Helpers\Authorize::class);
-                    $user = $authorize->authenticated();
-                }
+                    $user = $authorize->authenticated($token);
 
-                if ($user) {
-                    $authenticate = App::make(\Helpers\Authenticate::class);
-                    $authenticate->logRequest($user);
-                }
-            } catch (\Exception $e) {
-                if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.just_with_valid_token')) {
+                    if ($user) {
+                        $authenticate = App::make(\Helpers\Authenticate::class);
+                        $authenticate->logRequest($user);
+                    }
+                } catch (\Exception $e) {
                     return new JsonResponse($e, 401);
                 }
             }
@@ -48,7 +46,7 @@ class Api extends Controller
             }
 
             $schema = \Concrete5GraphqlWebsocket\SchemaBuilder::get();
-            SilerGraphQL\init($schema);
+            SilerGraphQL\init($schema, null, ['user' => $user]);
         }
     }
 }

@@ -1,18 +1,9 @@
-type User {
-  uID: String
-  uName: String
-}
-
 type Auth {
     "When set, two factor authentication is activated"
-    nonce: String
-    "Includes the current uID and uName in payload"
-    authToken: String
-    error: String
-}
-
-type Query {
-    me: User
+    nonce: String!
+    "Includes the current user with uID, uName, uEmail, uGroups, uAvatar in the payload"
+    authToken: String!
+    error: String!
 }
 
 type Mutation {
@@ -20,7 +11,7 @@ type Mutation {
   login(
     username: String!
     password: String!
-  ): Auth
+  ): Auth!
 
   "if you use https://www.concrete5.org/marketplace/addons/two-factor-login-security you can check the nonce with this function"
   checkNonce(
@@ -29,19 +20,21 @@ type Mutation {
       nonce: String!
       "Inserted by the client from the google app"
       u2SAPass: String!
-  ): Auth
+  ): Auth!
 
   "Logout an user."
-  logout: Auth
+  logout: Boolean!
 
+  "Returns an error array or an empty array"
   forgotPassword(
       username: String!
       changePasswordUrl: String!
-  ): [String]
+  ): [String!]!
 
+  "Returns an error array or an empty array"
   changePassword(
       password: String!
       passwordConfirm: String!
       token: String!
-  ): [String]
+  ): [String!]!
 }

@@ -15,21 +15,17 @@ use Concrete\Core\Http\Request as ConcreteRequest;
 use Concrete\Core\Permission\IPService;
 use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfo;
-use Concrete\Core\User\PersistentAuthentication;
 use Concrete\Core\Validator\String\EmailValidator;
 use Concrete\Core\User\ValidationHash;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Config;
-use Core;
-use Session;
-use Database;
-use Permissions;
-use View;
-use Log;
+use Concrete\Core\Support\Facade\Config;
+use Concrete\Core\Support\Facade\Application as Core;
+use Concrete\Core\Support\Facade\Session;
+use Concrete\Core\Support\Facade\Database;
+use Concrete\Core\Permission\Checker as Permissions;
+use Concrete\Core\Support\Facade\Log;
 
 class Authenticate
 {
-
     /**
      * Takes a username and password and authenticates the user and returns the authenticated user object
      *
@@ -65,26 +61,11 @@ class Authenticate
         return !empty($user) ? $user : null;
     }
 
-    public function authenticateAnonymus()
-    {
-        /** @var \Concrete\Core\Permission\IPService $ip_service */
-        $ip_service = Core::make('ip');
-        if ($ip_service->isBlacklisted()) {
-            throw new \Exception($ip_service->getErrorMessage());
-        }
-
-        $currentUser = $this->getCurrentUser();
-        if ($currentUser) {
-            $this->deauthenticateUser();
-        }
-
-        return null;
-    }
-
     public function deauthenticateUser()
     {
-        $currentUser = $this->getCurrentUser();
-        if ($currentUser) {
+        $currentUser = App::make(User::class);
+
+        if (!empty($currentUser)) {
             $currentUser->logout();
 
             $cookie = array_get($_COOKIE, 'ccmAuthUserHash', '');
@@ -257,10 +238,7 @@ class Authenticate
 
     public function setSecret($user, $secret)
     {
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->setSecret($secret);
-        } else {
+        if ($user) {
             $userInfo = $user->getUserInfoObject();
             $userInfo->setAttribute("graphql_jwt_auth_secret", $secret);
         }
@@ -270,10 +248,7 @@ class Authenticate
     {
         $secret = null;
 
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $secret = $anonymusUser->getSecret();
-        } else {
+        if ($user) {
             if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $secret = $userInfo->getAttribute("graphql_jwt_auth_secret");
@@ -283,45 +258,9 @@ class Authenticate
         return $secret;
     }
 
-    public function setRefreshCount($user, $count)
-    {
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->setRefreshCount($count);
-        } else {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
-            if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
-                $userInfo = $user->getUserInfoObject();
-                $userInfo->setAttribute("graphql_jwt_auth_refresh_count", $count);
-            }
-        }
-    }
-
-    public function getRefreshCount($user)
-    {
-        $count = null;
-
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $count = $anonymusUser->getRefreshCount();
-        } else {
-            if (0 !== (int) $user->getUserID()) {
-                $userInfo = $user->getUserInfoObject();
-                $count = $userInfo->getAttribute("graphql_jwt_auth_refresh_count");
-            }
-        }
-
-        return $count;
-    }
-
     public function setRevoked($user, $revoked)
     {
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->setRevoked($revoked);
-
-            return true;
-        } else {
+        if ($user) {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
@@ -336,10 +275,7 @@ class Authenticate
     {
         $revoked = null;
 
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $revoked = $anonymusUser->getRevoked();
-        } else {
+        if ($user) {
             if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $revoked = $userInfo->getAttribute("graphql_jwt_auth_secret_revoked");
@@ -351,10 +287,7 @@ class Authenticate
 
     public function setTokenExpires($user, $expires)
     {
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->setTokenExpires($expires);
-        } else {
+        if ($user) {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
@@ -365,10 +298,7 @@ class Authenticate
 
     public function setRefreshTokenExpires($user, $expires)
     {
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $anonymusUser->setRefreshTokenExpires($expires);
-        } else {
+        if ($user) {
             $up = new Permissions(UserInfo::getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
@@ -381,10 +311,7 @@ class Authenticate
     {
         $notBefore = 0;
 
-        if (!$user) {
-            $anonymusUser = App::make(AnonymusUser::class);
-            $notBefore = $anonymusUser->getNotBefore();
-        } else {
+        if ($user) {
             if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
                 $notBefore = $userInfo->getAttribute("graphql_jwt_token_not_before");
@@ -396,19 +323,7 @@ class Authenticate
 
     public function getUserByToken($token)
     {
-        //Just give access to the current session user
-        return $this->getCurrentUser();
-    }
-
-    public function getCurrentUser()
-    {
-        $currentUser = App::make(User::class);
-
-        if (empty($currentUser) || $currentUser->getUserID() === null) {
-            $currentUser = null;
-        }
-
-        return $currentUser;
+        return User::getByUserID($token->data->user->uID);
     }
 
     public function logRequest($user)
@@ -433,16 +348,6 @@ class Authenticate
                 $userInfo->setAttribute(
                     "graphql_jwt_request_count",
                     $userInfo->getAttribute("graphql_jwt_request_count") + 1
-                );
-            } else {
-                $anonymusUser = App::make(AnonymusUser::class);
-                $anonymusUser->setLastRequest($currentTime);
-                $anonymusUser->setLastRequestIp($ip);
-                $anonymusUser->setLastRequestAgent($userAgent);
-                $anonymusUser->setLastRequestTimezone($timezone);
-                $anonymusUser->setLastRequestLanguage($language);
-                $anonymusUser->setRequestCount(
-                    $anonymusUser->getRequestCount() + 1
                 );
             }
         }
