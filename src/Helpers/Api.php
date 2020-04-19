@@ -17,12 +17,12 @@ class Api extends Controller
     {
         if (Request\method_is('post')) {
             Response\cors();
+            $user = null;
 
             $tokenHelper = App::make(\Helpers\Token::class);
-            $token = $tokenHelper->getTokenFromAuthHeader();
+            $token = $tokenHelper->getToken();
             if ($token) {
                 try {
-                    $user = null;
                     $authorize = App::make(\Helpers\Authorize::class);
                     $user = $authorize->authenticated($token);
 

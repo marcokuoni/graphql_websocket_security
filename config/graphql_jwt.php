@@ -6,6 +6,7 @@ return [
     'auth_expire' => 30,
     'auth_refresh_expire' => 7200,
     'log_requests' => false,
+    'websocket_authorized' => true,
     'cookie' => [
         'cookie_name' => 'mainApp',
         'cookie_path' => DIR_REL . '/', //Path who can change the cookie

@@ -38,6 +38,9 @@ class GraphqlSecurity extends DashboardPageController
 
         $cookie_secure = (Bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure');
         $this->set('cookie_secure', $cookie_secure);
+
+        $websocket_authorized = (Bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.websocket_authorized');
+        $this->set('websocket_authorized', $websocket_authorized);
     }
 
     public function update_entity_settings()
@@ -51,6 +54,7 @@ class GraphqlSecurity extends DashboardPageController
                 $config = $this->app->make('config');
                 $lr = $this->post('log_requests') === 'yes';
                 $cs = $this->post('cookie_secure') === 'yes';
+                $wa = $this->post('websocket_authorized') === 'yes';
                 $auth_expire = (int) $this->post('auth_expire');
                 $auth_refresh_expire = (int) $this->post('auth_refresh_expire');
                 $cookie_name = (String) $this->post('cookie_name');
@@ -85,6 +89,7 @@ class GraphqlSecurity extends DashboardPageController
 
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure', $cs);
                 $config->save('concrete5_graphql_websocket_security::graphql_jwt.log_requests', $lr);
+                $config->save('concrete5_graphql_websocket_security::graphql_jwt.websocket_authorized', $wa);
 
                 $this->flash('success', t('Settings updated.'));
                 $this->redirect('/dashboard/system/environment/graphql_security', 'view');

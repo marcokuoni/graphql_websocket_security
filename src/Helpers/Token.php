@@ -117,7 +117,7 @@ class Token
                 isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
                 $_SERVER['SERVER_NAME']
             );
-            if ($baseUrl !== $token->iss) {
+            if (isset($_SERVER['SERVER_NAME']) && $baseUrl !== $token->iss) {
                 throw new \Exception(t('The iss do not match with this server'));
             }
 
@@ -142,10 +142,9 @@ class Token
      *
      * @return mixed|string
      */
-    public function getTokenFromAuthHeader()
+    public function getToken()
     {
         $request = new Request();
-        $token = '';
         $authHeader = $request->getHeader('authorization') ? $request->getHeader('authorization')->toString() : null;
         if (!isset($authHeader)) {
             $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
@@ -153,13 +152,18 @@ class Token
         $redirectAuthHeader = isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
         $authHeader = $authHeader !== false ? $authHeader : ($redirectAuthHeader !== false ? $redirectAuthHeader : null);
 
+        return $this->getTokenFromAuthHeader($authHeader);
+    }
+
+    public function getTokenFromAuthHeader($authHeader)
+    {
+        $token = '';
         if ($authHeader !== '') {
             list($token) = sscanf($authHeader, 'Bearer %s');
             if (!isset($token)) {
                 list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
             }
         }
-
         return $token;
     }
 
