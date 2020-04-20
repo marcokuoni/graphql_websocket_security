@@ -6,7 +6,6 @@ use GraphQl\SecurityResolver;
 use Concrete5GraphqlWebsocket\SchemaBuilder;
 use Siler\GraphQL as SilerGraphQL;
 use Concrete\Core\Support\Facade\Application as App;
-use Log;
 
 class Security
 {
@@ -23,6 +22,9 @@ class Security
                 $user = null;
 
                 $tokenHelper = App::make(\Helpers\Token::class);
+                if (is_array($context)) {
+                    $context = $context['Authorization'];
+                }
                 $token = $tokenHelper->getTokenFromAuthHeader($context);
                 $authorize = App::make(\Helpers\Authorize::class);
                 $user = $authorize->authenticated($token);
