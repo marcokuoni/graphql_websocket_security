@@ -14,18 +14,15 @@ class Security
         SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/security.gql');
         SchemaBuilder::registerResolverForMerge(SecurityResolver::get());
 
-        $config = App::make('config');
-        $websocket_authorized = (bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.websocket_authorized');
+        SilerGraphQL\listen(SilerGraphQL\ON_CONNECT, function ($context) {
+            $user = null;
 
-        if ($websocket_authorized) {
-            SilerGraphQL\listen(SilerGraphQL\ON_CONNECT, function ($context) {
-                $user = null;
-
-                $tokenHelper = App::make(\Helpers\Token::class);
-                if (is_array($context)) {
-                    $context = $context['Authorization'];
-                }
-                $token = $tokenHelper->getTokenFromAuthHeader($context);
+            $tokenHelper = App::make(\Helpers\Token::class);
+            if (is_array($context)) {
+                $context = $context['Authorization'];
+            }
+            $token = $tokenHelper->getTokenFromAuthHeader($context);
+            if ($token) {
                 $authorize = App::make(\Helpers\Authorize::class);
                 $user = $authorize->authenticated($token);
 
@@ -33,9 +30,9 @@ class Security
                     $authenticate = App::make(\Helpers\Authenticate::class);
                     $authenticate->logRequest($user);
                 }
+            }
 
-                return ['user' => $user];
-            });
-        }
+            return ['user' => $user];
+        });
     }
 }

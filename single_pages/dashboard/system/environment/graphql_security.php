@@ -154,23 +154,6 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
                 </label>
             </div>
         </div>
-
-        <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Its just possible to connect to the websocket server with a valid authorization token') ?>"><?= t('Websocket Authorization') ?></label>
-            <div class="radio">
-                <label>
-                    <?= $form->radio('websocket_authorized', 'yes', $websocket_authorized) ?>
-                    <span><?= t('On') ?></span>
-                </label>
-            </div>
-
-            <div class="radio">
-                <label>
-                    <?= $form->radio('websocket_authorized', 'no', !$websocket_authorized) ?>
-                    <span><?= t('Off') ?></span>
-                </label>
-            </div>
-        </div>
     </fieldset>
 
     <div class="ccm-dashboard-form-actions-wrapper">
