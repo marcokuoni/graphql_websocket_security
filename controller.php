@@ -20,7 +20,7 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '1.3.2'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '3.1.2';
+    protected $pkgVersion = '3.2.0';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';
@@ -36,9 +36,7 @@ class Controller extends Package
         $this->app->singleton('\Helpers\Authorize');
         $this->app->singleton('\Helpers\Authenticate');
         $this->app->singleton('\Helpers\Token');
-        $this->app->singleton('\Helpers\HasAccess');
 
-        $this->app->make(RouterInterface::class)->register('/graphql', 'Helpers\Api::view');
         $this->app->make(RouterInterface::class)->register('/refresh_token', 'Helpers\Authorize::refreshToken');
         $this->app->make(RouterInterface::class)->register('/logout', 'Helpers\Authorize::logoutThroughRest');
 
@@ -93,12 +91,6 @@ class Controller extends Package
         $this->installUserAttribute('graphql_jwt_token_not_before', 'Token not before', $number, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_token_expires', 'Token expires', $number, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_refresh_token_expires', 'Refresh token expires', $number, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_last_request', 'Last request', $number, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_last_request_ip', 'Last request IP', $text, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_last_request_agent', 'Last request agent', $text, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_last_request_timezone', 'Last request timezone', $text, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_last_request_language', 'Last request language', $text, $pkg, $custSet);
-        $this->installUserAttribute('graphql_jwt_request_count', 'Request count', $number, $pkg, $custSet);
     }
 
     private function installUserAttribute($handle, $name, $type, $pkg, $set, $data = null)

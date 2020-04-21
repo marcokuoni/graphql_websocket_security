@@ -147,12 +147,6 @@ class Authorize
         return new JsonResponse($this->logout());
     }
 
-    public function authenticated($token)
-    {
-        $tokenHelper = App::make(\Helpers\Token::class);
-        return $tokenHelper->validateToken($token);
-    }
-
     public function refreshToken()
     {
         try {

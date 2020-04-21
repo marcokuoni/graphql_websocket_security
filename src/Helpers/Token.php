@@ -117,6 +117,7 @@ class Token
                 isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
                 $_SERVER['SERVER_NAME']
             );
+            // websocketserver has no server_name
             if (isset($_SERVER['SERVER_NAME']) && $baseUrl !== $token->iss) {
                 throw new \Exception(t('The iss do not match with this server'));
             }
@@ -135,36 +136,6 @@ class Token
         }
 
         return $user;
-    }
-
-    /**
-     * Get the value of the Authorization header from the $_SERVER super global
-     *
-     * @return mixed|string
-     */
-    public function getToken()
-    {
-        $request = new Request();
-        $authHeader = $request->getHeader('authorization') ? $request->getHeader('authorization')->toString() : null;
-        if (!isset($authHeader)) {
-            $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : false;
-        }
-        $redirectAuthHeader = isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
-        $authHeader = $authHeader !== false ? $authHeader : ($redirectAuthHeader !== false ? $redirectAuthHeader : null);
-
-        return $this->getTokenFromAuthHeader($authHeader);
-    }
-
-    public function getTokenFromAuthHeader($authHeader)
-    {
-        $token = '';
-        if ($authHeader !== '') {
-            list($token) = sscanf($authHeader, 'Bearer %s');
-            if (!isset($token)) {
-                list($token) = sscanf($authHeader, 'Authorization: Bearer %s');
-            }
-        }
-        return $token;
     }
 
     private function checkIfUserCanCreateToken($user)

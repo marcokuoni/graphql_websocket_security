@@ -325,31 +325,4 @@ class Authenticate
     {
         return User::getByUserID($token->data->user->uID);
     }
-
-    public function logRequest($user)
-    {
-        $config = App::make('config');
-        if ((bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.log_requests')) {
-            $ipService = App::make(IPService::class);
-            $request = App::make(ConcreteRequest::class);
-            $ip = (string) $ipService->getRequestIPAddress();
-            $timezone = date_default_timezone_get();
-            $language = Localization::activeLocale();
-            $currentTime = time();
-            $userAgent = $request->server->get('HTTP_USER_AGENT');
-
-            if ($user && (int) $user->getUserID() > 0) {
-                $userInfo = $user->getUserInfoObject();
-                $userInfo->setAttribute("graphql_jwt_last_request", $currentTime);
-                $userInfo->setAttribute("graphql_jwt_last_request_ip", $ip);
-                $userInfo->setAttribute("graphql_jwt_last_request_agent", $userAgent);
-                $userInfo->setAttribute("graphql_jwt_last_request_timezone", $timezone);
-                $userInfo->setAttribute("graphql_jwt_last_request_language", $language);
-                $userInfo->setAttribute(
-                    "graphql_jwt_request_count",
-                    $userInfo->getAttribute("graphql_jwt_request_count") + 1
-                );
-            }
-        }
-    }
 }

@@ -91,23 +91,6 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
                 </div>
             </div>
         </div>
-
-        <div class="form-group" style="margin-top: 30px;">
-            <label class="launch-tooltip" data-placement="right" title="<?= t('Logs the last request time, ip, agent, timezone, language and the request count to a concrete5 or anonymous user') ?>"><?= t('Log User Requests') ?></label>
-            <div class="radio">
-                <label>
-                    <?= $form->radio('log_requests', 'yes', $log_requests) ?>
-                    <span><?= t('On') ?></span>
-                </label>
-            </div>
-
-            <div class="radio">
-                <label>
-                    <?= $form->radio('log_requests', 'no', !$log_requests) ?>
-                    <span><?= t('Off') ?></span>
-                </label>
-            </div>
-        </div>
     </fieldset>
     <fieldset>
         <legend><?= t('Refresh Cookie Settings') ?></legend>
