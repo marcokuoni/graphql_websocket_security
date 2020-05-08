@@ -167,7 +167,7 @@ class Token
                 "uName" => $user->getUserName(),
                 "uEmail" => $userInfo->getUserEmail(),
                 "uGroups" => array_map(function ($item) {
-                    return $item->getGroupDisplayName();
+                    return $item->getGroupName();
                 }, $user->getUserGroupObjects()),
                 "uAvatar" => $userInfo->getUserAvatar()->getPath()
             ];
