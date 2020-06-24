@@ -6,7 +6,7 @@
     "minimum-stability": "dev",
     "require": {
         "concrete5/core": "^8.5.1",
-        "lemonbrain/concrete5_graphql_websocket": "dev-master",
+        "lemonbrain/concrete5_graphql_websocket": "^1.7.2",
         "firebase/php-jwt": "^5.0"
     },
     "autoload": {
