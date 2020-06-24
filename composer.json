@@ -3,7 +3,6 @@
     "description": "GraphQL and websocket secure package that is installable via composer for concrete 5",
     "type": "concrete5-package",
     "license": "MIT",
-    "minimum-stability": "dev",
     "require": {
         "concrete5/core": "^8.5.1",
         "lemonbrain/concrete5_graphql_websocket": "^1.7.2",
