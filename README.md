@@ -15,14 +15,6 @@ To install this package on a [composer based concrete5](https://github.com/concr
 $ composer require lemonbrain/concrete5_graphql_websocket_security
 ```
 
-Then install npm requirements
-
-```sh
-$ cd ./public/packages/concrete5_graphql_websocket_security
-$ npm install
-$ npx webpack --watch
-```
-
 Then install the package on Concrete5
 
 ```sh
