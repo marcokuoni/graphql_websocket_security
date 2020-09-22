@@ -1,0 +1,13 @@
+type Mutation {
+  "Returns an error array or an empty array"
+  createUser(
+      username: String!
+      email: String!
+      password: String!
+  ): [String!]!
+}
+
+type Query {
+  "gql file without query is not working :("
+  dummy: String
+}
