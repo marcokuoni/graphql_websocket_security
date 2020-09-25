@@ -25,20 +25,22 @@ class UserResolver
                         $password = (string) $args['password'];
 
                         $user = App::make(\Helpers\User::class);
-                        if ($user->create($username, $email, $password)) {
-                            // $authorize = App::make(\Helpers\Authorize::class);
-                            // return $authorize->loginAndGetToken($username, $password);
-                            return ['username' => $username, 'email' => $email];
-                        } else {
-                            return ['error' => 'Beim Erstellen des Benutzers ist ein Fehler aufgetreten'];
-                        }
+                        $result = $user->create($email, $password, $username);
+                        return json_decode(json_encode($result));
                     };
                 } catch (\Exception $e) {
                     $error->add($e);
                 }
 
                 if ($error->has()) {
-                    return ['error' => $error->getList()];
+                    $result = [
+                        'result' => null,
+                        'errors' => []
+                    ];
+                    foreach ($error->getList() as $value) {
+                        $result['errors'][] = $value->getMessage();
+                    }
+                    return $result;
                 }
             },
             'sendValidationEmail' => function ($root, $args, $context) {
@@ -64,6 +66,7 @@ class UserResolver
         $subscriptionType = [];
 
         return [
+            'User' => $userType,
             'Query'    => $queryType,
             'Mutation' => $mutationType,
             'Subscription' => $subscriptionType,
