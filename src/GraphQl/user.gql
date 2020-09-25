@@ -9,7 +9,7 @@ type CreateUserResult {
 }
 
 type Mutation {
-  "Returns an error array or an empty array"
+  "Returns results (userName and email) and an error array"
   createUser(
       email: String!
       password: String!
