@@ -3,10 +3,10 @@
 namespace GraphQl;
 
 use GraphQl\SecurityResolver;
-use GraphQl\UserResolver;
+use GraphQl\UserManagementResolver;
 use Concrete5GraphqlWebsocket\SchemaBuilder;
 
-class Security
+class Register
 {
     public static function start()
     {
@@ -14,6 +14,7 @@ class Security
         SchemaBuilder::registerResolverForMerge(SecurityResolver::get());
 
         SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/user.gql');
-        SchemaBuilder::registerResolverForMerge(UserResolver::get());
+        SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/userManagement.gql');
+        SchemaBuilder::registerResolverForMerge(UserManagementResolver::get());
     }
 }

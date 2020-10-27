@@ -9,6 +9,8 @@ use Concrete\Core\Support\Facade\UserInfo;
 use Concrete\Core\Support\Facade\Config;
 use TsaModels\Authenticator as Authenticator;
 use TsaModels\SettingsManager as SettingsManager;
+use Log;
+use Helpers\SecurityException;
 
 class Authorize
 {
@@ -31,7 +33,7 @@ class Authorize
         $accessToken = '';
         $nonce = '';
         $token = '';
-        $error = '';
+        $authError = null;
 
         try {
             $authenticate = App::make(\Helpers\Authenticate::class);
@@ -58,13 +60,23 @@ class Authorize
             }
 
             if ($user->isError()) {
-                $error = t('Unknown login error occurred. Please try again.');
+                $error = $user->getError();
+                Log::addDebug($error);
+                if ($error === USER_NON_VALIDATED){
+                    $ui = App::make('\Concrete\Core\User\UserInfoRepository')->getByEmail($username);
+                    $authError = [
+                        'type' => 'user_non_validated',
+                        'uName' => $ui->getUserName()
+                    ];
+                } else {
+                    throw new SecurityException('unknown_login_error');
+                }
             }
         } catch (\Exception $e) {
-            $error = $e->getMessage();
+            throw new SecurityException('unknown_login_error');
         }
 
-        return ['error' => $error, 'authToken' => $accessToken, 'nonce' => $token];
+        return ['authError' => $authError, 'authToken' => $accessToken, 'nonce' => $token];
     }
 
     public function checkNonce($user, $nonce, $u2SAPass)

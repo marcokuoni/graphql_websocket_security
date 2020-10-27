@@ -1,20 +1,6 @@
 type User {
-    userName: String!,
-    email: String!,
-}
-
-type CreateUserResult {
-    result: User,
-    errors: [String]!
-}
-
-type Mutation {
-  "Returns results (userName and email) and an error array"
-  createUser(
-      email: String!
-      password: String!
-      username: String
-  ): CreateUserResult!
+    uName: String!,
+    uEmail: String!,
 }
 
 type Query {

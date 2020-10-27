@@ -1,0 +1,34 @@
+type CreateUserResult {
+    result: User,
+    isNewUser: Boolean!,
+    validationErrors: [String]!
+}
+
+type Mutation {
+  "Returns result (userName and email), a validationErrors array and isNewUser"
+  createUser(
+      email: String!
+      password: String!
+      username: String
+      reCaptchaToken: String
+      validationUrl: String
+  ): CreateUserResult!
+
+"sends a validation email to the emailaddress of the user"
+  sendValidationEmail(
+      uName: String!,
+      reCaptchaToken: String
+      validationUrl: String
+  ): Boolean!
+
+  "validates the users emailaddress trough the token in the validation email"
+  validateEmail(
+      token: String!
+  ): Boolean!
+  
+}
+
+type Query {
+  "gql file without query is not working :("
+  dummy: String
+}
