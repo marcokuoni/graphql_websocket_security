@@ -3,7 +3,15 @@ type Auth {
     nonce: String!
     "Includes the current user with uID, uName, uEmail, uGroups, uAvatar in the payload"
     authToken: String!
-    error: String!
+    "When the login was not successfull addintional information is provided here"
+    authError: AuthError
+}
+
+type AuthError {
+    "Type of the error"
+    type: String!
+    "The user name of the user on which the login failed"
+    uName: String
 }
 
 type Mutation {

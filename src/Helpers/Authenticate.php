@@ -93,7 +93,8 @@ class Authenticate
                     throw new \Exception($e->toText());
                 }
 
-                $oUser = UserInfo::getByEmail($username);
+                // $oUser = UserInfo::getByEmail($username);
+                $oUser = \Core::make('Concrete\Core\User\UserInfoRepository')->getByEmail($username);
                 if ($oUser) {
                     $mh = App::make('helper/mail');
                     //$mh->addParameter('uPassword', $oUser->resetUserPassword());
@@ -114,7 +115,8 @@ class Authenticate
 
                     $fromEmail = (string) Config::get('concrete.email.forgot_password.address');
                     if (!strpos($fromEmail, '@')) {
-                        $adminUser = UserInfo::getByID(USER_SUPER_ID);
+                        // $adminUser = UserInfo::getByID(USER_SUPER_ID);
+                        $adminUser = \Core::make('Concrete\Core\User\UserInfoRepository')->getByID(USER_SUPER_ID);
                         if (is_object($adminUser)) {
                             $fromEmail = $adminUser->getUserEmail();
                         } else {
@@ -149,7 +151,8 @@ class Authenticate
     {
         $e = Core::make('helper/validation/error');
         if (is_string($token)) {
-            $ui = UserInfo::getByValidationHash($token);
+            // $ui = UserInfo::getByValidationHash($token);
+            $ui = \Core::make('Concrete\Core\User\UserInfoRepository')->getByValidationHash($token);
         } else {
             $ui = null;
         }
@@ -261,7 +264,8 @@ class Authenticate
     public function setRevoked($user, $revoked)
     {
         if ($user) {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            // $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            $up = new Permissions(\Core::make('Concrete\Core\User\UserInfoRepository')->getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_auth_secret_revoked", $revoked);
@@ -288,7 +292,8 @@ class Authenticate
     public function setTokenExpires($user, $expires)
     {
         if ($user) {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            // $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            $up = new Permissions(\Core::make('Concrete\Core\User\UserInfoRepository')->getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_token_expires", $expires);
@@ -299,7 +304,8 @@ class Authenticate
     public function setRefreshTokenExpires($user, $expires)
     {
         if ($user) {
-            $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            // $up = new Permissions(UserInfo::getByID($user->getUserID()));
+            $up = new Permissions(\Core::make('Concrete\Core\User\UserInfoRepository')->getByID($user->getUserID()));
             if (0 !== (int) $user->getUserID() && $up->canEditUser()) {
                 $userInfo = $user->getUserInfoObject();
                 $userInfo->setAttribute("graphql_jwt_refresh_token_expires", $expires);

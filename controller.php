@@ -27,6 +27,8 @@ class Controller extends Package
     protected $pkgAutoloaderRegistries = [
         'src/GraphQl' => '\GraphQl',
         'src/Helpers' => '\Helpers',
+        'src/UserManagement' => '\C5GraphQl\UserManagement',
+        'src/User' => '\C5GraphQl\User',
     ];
 
     public function on_start()
@@ -40,7 +42,7 @@ class Controller extends Package
         $this->app->make(RouterInterface::class)->register('/refresh_token', 'Helpers\Authorize::refreshToken');
         $this->app->make(RouterInterface::class)->register('/logout', 'Helpers\Authorize::logoutThroughRest');
 
-        \GraphQl\Security::start();
+        \GraphQl\Register::start();
     }
 
     public function install()
