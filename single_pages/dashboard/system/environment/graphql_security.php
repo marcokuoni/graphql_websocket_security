@@ -137,6 +137,29 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
                 </label>
             </div>
         </div>
+        <div class="form-group" style="margin-top: 30px;">
+            <label class="launch-tooltip" data-placement="right" title="<?= t('Declare if your cookie should be restricted to a first-party or same-site context') ?>"><?= t('Cookie SameSite') ?></label>
+            <div class="radio">
+                <label>
+                    <?= $form->radio('cookie_same_site', 'Strict', $cookie_same_site === 'Strict') ?>
+                    <span><?= t('Strict') ?></span>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label>
+                    <?= $form->radio('cookie_same_site', 'Lax', $cookie_same_site === 'Lax') ?>
+                    <span><?= t('Lax') ?></span>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label>
+                    <?= $form->radio('cookie_same_site', 'None', $cookie_same_site === 'None') ?>
+                    <span><?= t('None') ?></span>
+                </label>
+            </div>
+        </div>
     </fieldset>
 
     <div class="ccm-dashboard-form-actions-wrapper">
