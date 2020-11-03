@@ -8,6 +8,7 @@ use Concrete\Core\User\User as ConcreteUser;
 use Concrete\Core\User\Group\Group;
 use Concrete\Core\Localization\Localization;
 use Doctrine\ORM\EntityManagerInterface;
+use Concrete\Core\User\UserInfoRepository;
 
 use C5GraphQl\User\StatusService;
 
