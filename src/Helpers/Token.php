@@ -166,10 +166,12 @@ class Token
                 "uID" => $user->getUserID(),
                 "uName" => $user->getUserName(),
                 "uEmail" => $userInfo->getUserEmail(),
+                "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
+                "uIsValidated" => $userInfo->isValidated(),
+                "uAvatar" => $userInfo->getUserAvatar()->getPath(),
                 "uGroupsPath" => array_map(function ($item) {
                     return $item->getGroupPath();
                 }, $user->getUserGroupObjects()),
-                "uAvatar" => $userInfo->getUserAvatar()->getPath()
             ];
         }
 

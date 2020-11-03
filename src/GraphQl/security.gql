@@ -1,7 +1,7 @@
 type Auth {
     "When set, two factor authentication is activated"
     nonce: String!
-    "Includes the current user with uID, uName, uEmail, uGroups, uAvatar in the payload"
+    "Includes the current user with uID, uName, uEmail, uDefaultLanguage, uGroupsPath, uAvatar, uIsValidated in the payload"
     authToken: String!
     "When the login was not successfull addintional information is provided here"
     authError: AuthError

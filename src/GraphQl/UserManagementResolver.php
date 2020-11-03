@@ -3,7 +3,6 @@
 namespace GraphQl;
 
 use Concrete\Core\Support\Facade\Application as App;
-use Concrete\Core\User\User;
 
 use C5GraphQl\UserManagement\UserResolverHandler;
 
@@ -18,6 +17,10 @@ class UserManagementResolver
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->createUser($root, $args, $context);
             },
+            'updateUser' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->updateUser($root, $args, $context);
+            },
             'sendValidationEmail' => function ($root, $args, $context) {
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->sendValidationEmail($root, $args, $context);
@@ -31,7 +34,6 @@ class UserManagementResolver
         $subscriptionType = [];
 
         return [
-            'User' => $userType,
             'Query'    => $queryType,
             'Mutation' => $mutationType,
             'Subscription' => $subscriptionType,

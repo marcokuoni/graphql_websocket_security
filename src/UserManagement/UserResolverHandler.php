@@ -38,13 +38,14 @@ class UserResolverHandler
             $username = $sani->sanitizeString($args['username']);
             $email = $sani->sanitizeString($args['email']);
             $password = $sani->sanitizeString($args['password']);
+            $userLocale = $sani->sanitizeString($args['userLocale']);
+            $groups = $args['groups'];
             //check for existing user
-            $ui = App::make('\Concrete\Core\User\UserInfoRepository')->getByEmail($email);
+            $ui = App::make(UserInfoRepository::class)->getByEmail($email);
             $pwHasher = App::make(\Concrete\Core\Encryption\PasswordHasher::class);
             if (is_object($ui) && $pwHasher->checkPassword($password, $ui->getUserPassword())) {
                 $result = [
                     'result' => ['uEmail' => $email, 'uName' => $ui->getUserName()],
-                    'isNewUser' => false,
                     'validationErrors' => [],
                 ];
                 return json_decode(json_encode($result));
@@ -53,7 +54,41 @@ class UserResolverHandler
             //create user
             $user = App::make(User::class);
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-            $result = $user->create($email, $password, $username, $validationUrl);
+            $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $groups);
+            return json_decode(json_encode($result));
+        } catch (\Exception $e) {
+            throw new UserManagementException('unknown');
+        }
+    }
+
+    public function updateUser($root, $args, $context)
+    {
+        $sani = App::make('helper/security');
+        $ip_service = App::make('ip');
+        if ($ip_service->isBlacklisted()) {
+            throw new \Exception($ip_service->getErrorMessage());
+        }
+
+        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, ['admin'])) {
+            throw new UserManagementException('not_allowed');
+        }
+
+        try {
+            $username = $sani->sanitizeString($args['username']);
+            $email = $sani->sanitizeString($args['email']);
+            $userLocale = $sani->sanitizeString($args['userLocale']);
+            $groups = $args['groups'];
+            //check for existing user
+            $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+
+            if (!$userInfo) {
+                throw new UserManagementException('user_not_found');
+            }
+
+            //update user
+            $user = App::make(User::class);
+            $validationUrl = $sani->sanitizeURL($args['validationUrl']);
+            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             throw new UserManagementException('unknown');
@@ -77,7 +112,7 @@ class UserResolverHandler
 
         $uName = $sani->sanitizeString($args['uName']);
         $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-        $ui = App::make('Concrete\Core\User\UserInfoRepository')->getByUserName($uName);
+        $ui = App::make(UserInfoRepository::class)->getByUserName($uName);
         if (is_object($ui) && !$ui->isError()) {
             //send validation email
             App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl);
@@ -90,7 +125,7 @@ class UserResolverHandler
     public function validateEmail($root, $args, $context) {
         $sani = App::make('helper/security');
         $token = $sani->sanitizeString($args['token']);
-        $ui = $ui = App::make('\Concrete\Core\User\UserInfoRepository')->getByValidationHash($token);
+        $ui = $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);
         if (is_object($ui)) {
             $ui->markValidated();
             // $this->set('uEmail', $ui->getUserEmail());

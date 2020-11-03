@@ -1,18 +1,30 @@
-type CreateUserResult {
+type UserResult {
     result: User,
-    isNewUser: Boolean!,
     validationErrors: [String]!
 }
 
 type Mutation {
-  "Returns result (userName and email), a validationErrors array and isNewUser"
+  "Returns result (userName and email), a validationErrors array"
   createUser(
       email: String!
       password: String!
       username: String
       reCaptchaToken: String
       validationUrl: String
-  ): CreateUserResult!
+      userLocale: String
+      "group by path with leading slash"
+      groups: [String]
+  ): UserResult!
+
+  "Returns result (userName and email), a validationErrors array"
+  updateUser(
+      username: String!
+      email: String
+      validationUrl: String
+      userLocale: String
+      "group by path with leading slash"
+      groups: [String]
+  ): UserResult!
 
 "sends a validation email to the emailaddress of the user"
   sendValidationEmail(
