@@ -229,7 +229,8 @@ class Authenticate
                 DIR_REL . '/',
                 $config->get('concrete.session.cookie.cookie_domain'),
                 $config->get('concrete.session.cookie.cookie_secure'),
-                $config->get('concrete.session.cookie.cookie_httponly')
+                $config->get('concrete.session.cookie.cookie_httponly'),
+                $config->get('concrete.session.cookie.cookie_same_site'),
             );
         }
 

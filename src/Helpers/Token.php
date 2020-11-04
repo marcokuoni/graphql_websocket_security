@@ -7,6 +7,7 @@ use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Error\UserMessageException;
 use Zend\Http\PhpEnvironment\Request;
 use Concrete\Core\User\UserInfoRepository;
+use Concrete\Core\Cookie\ResponseCookieJar;
 
 class Token
 {
@@ -35,17 +36,21 @@ class Token
         $cookie_lifetime = (int)  gmmktime() + $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_lifetime');
         $cookie_domain = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_domain');
         $cookie_secure = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure');
+        $cookie_same_site = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_same_site');
         $cookie_httponly = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_httponly');
+        $cookie_raw = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_raw');
 
-        $cookie = App::make('cookie');
-        $cookie->set(
+        // $cookie = App::make('cookie');
+        App::make(ResponseCookieJar::class)->addCookie(
             $cookie_name,
             $refreshToken,
             $cookie_lifetime,
             $cookie_path,
             $cookie_domain,
             $cookie_secure,
-            $cookie_httponly
+            $cookie_httponly,
+            $cookie_raw,
+            $cookie_same_site,
         );
     }
 
