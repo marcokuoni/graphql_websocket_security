@@ -17,13 +17,18 @@ class UserResolverHandler
     {
         $sani = App::make('helper/security');
         $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
+        $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
+
+        if (!is_array($adminArray)) {
+            $adminArray = ['admin'];
+        }
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
             throw new \Exception($ip_service->getErrorMessage());
         }
 
-        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, ['admin'])) {
+        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, $adminArray)) {
             throw new UserManagementException('not_allowed');
         }
 
@@ -39,21 +44,24 @@ class UserResolverHandler
             $email = $sani->sanitizeString($args['email']);
             $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
+            $validationUrl = $sani->sanitizeURL($args['validationUrl']);
             $groups = $args['groups'];
             //check for existing user
             $ui = App::make(UserInfoRepository::class)->getByEmail($email);
             $pwHasher = App::make(\Concrete\Core\Encryption\PasswordHasher::class);
-            if (is_object($ui) && $pwHasher->checkPassword($password, $ui->getUserPassword())) {
-                $result = [
-                    'result' => ['uEmail' => $email, 'uName' => $ui->getUserName()],
-                    'validationErrors' => [],
-                ];
+            $user = App::make(User::class);
+            if (is_object($ui) && ($pwHasher->checkPassword($password, $ui->getUserPassword()) || HasAccess::checkByGroup($context, $adminArray))) {
+                $userInfo = App::make(UserInfoRepository::class)->getByName($ui->getUserName());
+
+                if (!$userInfo) {
+                    throw new UserManagementException('user_not_found');
+                }
+
+                $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups);
                 return json_decode(json_encode($result));
             }
 
             //create user
-            $user = App::make(User::class);
-            $validationUrl = $sani->sanitizeURL($args['validationUrl']);
             $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
@@ -65,11 +73,17 @@ class UserResolverHandler
     {
         $sani = App::make('helper/security');
         $ip_service = App::make('ip');
+        $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
+        
+        if (!is_array($adminArray)) {
+            $adminArray = ['admin'];
+        }
+
         if ($ip_service->isBlacklisted()) {
             throw new \Exception($ip_service->getErrorMessage());
         }
 
-        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, ['admin'])) {
+        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, $adminArray)) {
             throw new UserManagementException('not_allowed');
         }
 
@@ -122,7 +136,8 @@ class UserResolverHandler
         }
     }
 
-    public function validateEmail($root, $args, $context) {
+    public function validateEmail($root, $args, $context)
+    {
         $sani = App::make('helper/security');
         $token = $sani->sanitizeString($args['token']);
         $ui = $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);

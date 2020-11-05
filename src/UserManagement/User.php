@@ -9,6 +9,7 @@ use Concrete\Core\User\Group\Group;
 use Concrete\Core\Localization\Localization;
 use Doctrine\ORM\EntityManagerInterface;
 use Concrete\Core\User\UserInfoRepository;
+use Concrete\Core\Validator\String\EmailValidator;
 
 use C5GraphQl\User\StatusService;
 
@@ -89,7 +90,7 @@ class User
 
         try {
             if ($email !== '') {
-                App::make('validator/user/email')->isValid($email, $validationErrors);
+                App::make(EmailValidator::class)->isValid($email, $validationErrors);
             }
 
             if (!$validationErrors->has()) {
@@ -155,17 +156,25 @@ class User
             foreach ($currentUserGroups as $currentGroupID) {
                 $currentGroup = Group::getByID($currentGroupID);
                 $currentUserGroupPaths[] = $currentGroup->getGroupPath();
-                if (!in_array($currentGroup->getGroupPath(), $groups)) {
-                    $uo->exitGroup($currentGroup);
-                }
             }
             foreach ($groups as $group) {
-                if (!in_array($group, $currentUserGroupPaths)) {
-                    $g = Group::getByPath($group);
-                    if ($g) {
-                        $uo->enterGroup($g);
-                    } else {
-                        $validationErrors->add(t('New Group "%1$s" is not existing.', $group));
+                if ($group['task'] === 'ADD') {
+                    if (!in_array($group['name'], $currentUserGroupPaths)) {
+                        $g = Group::getByPath($group['name']);
+                        if ($g) {
+                            $uo->enterGroup($g);
+                        } else {
+                            $validationErrors->add(t('New Group "%1$s" is not existing.', $group['name']));
+                        }
+                    }
+                } else {
+                    if (in_array($group['name'], $currentUserGroupPaths)) {
+                        $g = Group::getByPath($group['name']);
+                        if ($g) {
+                            $uo->exitGroup($g);
+                        } else {
+                            $validationErrors->add(t('New Group "%1$s" is not existing.', $group['name']));
+                        }
                     }
                 }
             }

@@ -14,5 +14,8 @@ return [
         'cookie_httponly' => true,  //no client can read the cookie
         'cookie_same_site' => 'Strict',  //declare if your cookie should be restricted to a first-party or same-site context
         'cookie_raw' => false  // the cookie is not html encoded
+    ],
+    'adminArray' => [
+        '/Administrators'
     ]
 ];

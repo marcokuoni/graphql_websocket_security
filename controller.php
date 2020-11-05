@@ -20,7 +20,7 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '1.3.2'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '4.0.4';
+    protected $pkgVersion = '4.0.5';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';

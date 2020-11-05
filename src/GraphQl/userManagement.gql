@@ -3,6 +3,16 @@ type UserResult {
     validationErrors: [String]!
 }
 
+enum Task {
+  ADD,
+  REMOVE
+}
+
+input Groups {
+  name: String!
+  task: Task!
+}
+
 type Mutation {
   "Returns result (userName and email), a validationErrors array"
   createUser(
@@ -13,7 +23,7 @@ type Mutation {
       validationUrl: String
       userLocale: String
       "group by path with leading slash"
-      groups: [String]
+      groups: [Groups]
   ): UserResult!
 
   "Returns result (userName and email), a validationErrors array"
@@ -23,7 +33,7 @@ type Mutation {
       validationUrl: String
       userLocale: String
       "group by path with leading slash"
-      groups: [String]
+      groups: [Groups]
   ): UserResult!
 
 "sends a validation email to the emailaddress of the user"
