@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "concrete5/core": "^8.5.1",
-        "lemonbrain/concrete5_graphql_websocket": "^1.4.4",
+        "lemonbrain/concrete5_graphql_websocket": "^2.0.0",
         "firebase/php-jwt": "^5.0"
     },
     "autoload": {
