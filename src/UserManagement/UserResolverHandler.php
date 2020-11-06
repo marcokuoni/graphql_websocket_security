@@ -74,7 +74,7 @@ class UserResolverHandler
         $sani = App::make('helper/security');
         $ip_service = App::make('ip');
         $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
-        
+
         if (!is_array($adminArray)) {
             $adminArray = ['admin'];
         }
@@ -89,9 +89,14 @@ class UserResolverHandler
 
         try {
             $username = $sani->sanitizeString($args['username']);
+            $contextUsername = $context['user']->uName;
             $email = $sani->sanitizeString($args['email']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
             $groups = $args['groups'];
+            
+            if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername) {
+                throw new UserManagementException('unknown');
+            }
             //check for existing user
             $userInfo = App::make(UserInfoRepository::class)->getByName($username);
 

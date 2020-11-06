@@ -65,7 +65,6 @@ class User
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
 
-
                 $result['result'] = ['uEmail' => $newUser->getUserEmail(), 'uName' => $newUser->getUserName()];
                 return $result;
             } else {
