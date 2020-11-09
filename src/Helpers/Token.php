@@ -8,6 +8,7 @@ use Concrete\Core\Error\UserMessageException;
 use Zend\Http\PhpEnvironment\Request;
 use Concrete\Core\User\UserInfoRepository;
 use Concrete\Core\Cookie\ResponseCookieJar;
+use Concrete\Core\Support\Facade\Log;
 
 class Token
 {
@@ -109,6 +110,7 @@ class Token
         }
 
         if (!$secret) {
+            Log::addInfo(t('JWT is not configured properly'));
             throw new UserMessageException(t('JWT is not configured properly'));
         }
 
@@ -124,18 +126,22 @@ class Token
             );
             // websocketserver has no server_name
             if (isset($_SERVER['SERVER_NAME']) && $baseUrl !== $token->iss) {
+                Log::addInfo(t('The iss do not match with this server'));
                 throw new \Exception(t('The iss do not match with this server'));
             }
 
             $user = $authenticate->getUserByToken($token);
 
             if (!isset($token->data->user->user_secret) || $this->getUserJwtSecret($user) !== $token->data->user->user_secret) {
+                Log::addInfo(t('The User Secret does not match or has been revoked for this user'));
                 throw new \Exception(t('The User Secret does not match or has been revoked for this user'));
             }
         } catch (\Exception $error) {
             if ($error->getMessage() === 'Expired token') {
+                Log::addInfo(t('Expired token'));
                 throw new UserMessageException(t('Expired token'), 401);
             } else {
+                Log::addInfo(t('The JWT Token is invalid'));
                 throw new UserMessageException(t('The JWT Token is invalid'), 401);
             }
         }
@@ -148,6 +154,7 @@ class Token
         $notBefore = $this->getNotBefore($user);
 
         if ($this->isJwtSecretRevoked($user)) {
+            Log::addInfo(t('The JWT token cannot be issued for this user'));
             throw new \Exception(t('The JWT token cannot be issued for this user'));
         }
 
@@ -253,6 +260,7 @@ class Token
 
         if (true === $this->isJwtSecretRevoked($user)) {
             if (!empty($currentUser)) {
+                Log::addInfo(t('The JWT Auth secret cannot be returned'));
                 throw new UserMessageException(t('The JWT Auth secret cannot be returned'));
             }
         }
@@ -317,6 +325,7 @@ class Token
 
 
         if (empty($secret_key)) {
+            Log::addInfo(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
             throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
         return $secret_key;
@@ -336,6 +345,7 @@ class Token
         $secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key');
 
         if (empty($secret_key)) {
+            Log::addInfo(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
             throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
         return $secret_key;

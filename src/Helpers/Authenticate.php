@@ -39,6 +39,7 @@ class Authenticate
         /** @var \Concrete\Core\Permission\IPService $ip_service */
         $ip_service = Core::make('ip');
         if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
             throw new \Exception($ip_service->getErrorMessage());
         }
 
@@ -53,6 +54,7 @@ class Authenticate
         }
 
         if ($user->isError()) {
+            Log::addInfo('Unknown login error occurred. Please try again.');
             throw new UserMessageException(t('Unknown login error occurred. Please try again.'));
         }
 
@@ -90,6 +92,7 @@ class Authenticate
             try {
                 $e = App::make('error');
                 if (!App::make(EmailValidator::class)->isValid($username, $e)) {
+                    Log::addInfo('Email address not valid: ' . $e->toText());
                     throw new \Exception($e->toText());
                 }
 

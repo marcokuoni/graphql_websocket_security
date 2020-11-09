@@ -10,6 +10,7 @@ use Concrete\Core\User\User as C5User;
 
 use C5GraphQl\UserManagement\User;
 use C5GraphQl\User\StatusService;
+use Concrete\Core\Support\Facade\Log;
 
 class UserResolverHandler
 {
@@ -25,16 +26,19 @@ class UserResolverHandler
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
             throw new \Exception($ip_service->getErrorMessage());
         }
 
         if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, $adminArray)) {
+            Log::addInfo('Not allowed to create user');
             throw new UserManagementException('not_allowed');
         }
 
         if (Config::get('concrete.user.registration.captcha')) {
             $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
             if (!$captcha->check($reCaptchaToken, 'signup')) {
+                Log::addInfo('Captcha not valid');
                 throw new UserManagementException('unknown');
             }
         }
@@ -54,6 +58,8 @@ class UserResolverHandler
                 $userInfo = App::make(UserInfoRepository::class)->getByName($ui->getUserName());
 
                 if (!$userInfo) {
+                    Log::addInfo('Existing user not found: ' . $username);
+                    Log::addInfo('Existing user not found');
                     throw new UserManagementException('user_not_found');
                 }
 
@@ -65,6 +71,7 @@ class UserResolverHandler
             $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
+            Log::addInfo('Couldnt create user');
             throw new UserManagementException('unknown');
         }
     }
@@ -80,11 +87,8 @@ class UserResolverHandler
         }
 
         if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
             throw new \Exception($ip_service->getErrorMessage());
-        }
-
-        if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, $adminArray)) {
-            throw new UserManagementException('not_allowed');
         }
 
         try {
@@ -95,12 +99,14 @@ class UserResolverHandler
             $groups = $args['groups'];
             
             if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername) {
+                Log::addInfo('Not allowed to update user: ' . $contextUsername);
                 throw new UserManagementException('unknown');
             }
             //check for existing user
             $userInfo = App::make(UserInfoRepository::class)->getByName($username);
 
             if (!$userInfo) {
+                Log::addInfo('Existing user not found: ' . $username);
                 throw new UserManagementException('user_not_found');
             }
 
@@ -110,6 +116,7 @@ class UserResolverHandler
             $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
+            Log::addInfo('Couldnt update user');
             throw new UserManagementException('unknown');
         }
     }
@@ -121,11 +128,13 @@ class UserResolverHandler
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
             throw new \Exception($ip_service->getErrorMessage());
         }
 
         $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
         if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
+            Log::addInfo('Captcha not valid');
             throw new UserManagementException('unknown');
         }
 
@@ -137,6 +146,7 @@ class UserResolverHandler
             App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl);
             return true;
         } else {
+            Log::addInfo('Couldnt send validation email to ' . $uName);
             throw new UserManagementException('unknown');
         }
     }
