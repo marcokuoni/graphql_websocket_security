@@ -25,23 +25,26 @@ class StatusService
         $this->config = $config;
     }
 
-    public function sendEmailValidation($user, $validationUrl) {
-        $uHash = $user->setupValidation();
-        $fromEmail = (string) $this->config->get('concrete.email.validate_registration.address');
-        if (strpos($fromEmail, '@')) {
-            $fromName = (string) $this->config->get('concrete.email.validate_registration.name');
-            if ($fromName === '') {
-                $fromName = t('Validate Email Address');
+    public function sendEmailValidation($user, $validationUrl)
+    {
+        if ($validationUrl !== '') {
+            $uHash = $user->setupValidation();
+            $fromEmail = (string) $this->config->get('concrete.email.validate_registration.address');
+            if (strpos($fromEmail, '@')) {
+                $fromName = (string) $this->config->get('concrete.email.validate_registration.name');
+                if ($fromName === '') {
+                    $fromName = t('Validate Email Address');
+                }
+                $this->mh->from($fromEmail, $fromName);
             }
-            $this->mh->from($fromEmail, $fromName);
+            $this->mh->addParameter('uEmail', $user->getUserEmail());
+            $this->mh->addParameter('uHash', $uHash);
+            $this->mh->addParameter('uEmail', $user->getUserEmail());
+            $this->mh->addParameter('site', tc('SiteName', $this->config->get('concrete.site')));
+            $this->mh->addParameter('validationUrl', $validationUrl);
+            $this->mh->to($user->getUserEmail());
+            $this->mh->load('validate_user_email', 'concrete5_graphql_websocket_security');
+            $this->mh->sendMail();
         }
-        $this->mh->addParameter('uEmail', $user->getUserEmail());
-        $this->mh->addParameter('uHash', $uHash);
-        $this->mh->addParameter('uEmail', $user->getUserEmail());
-        $this->mh->addParameter('site', tc('SiteName', $this->config->get('concrete.site')));
-        $this->mh->addParameter('validationUrl', $validationUrl);
-        $this->mh->to($user->getUserEmail());
-        $this->mh->load('validate_user_email', 'concrete5_graphql_websocket_security');
-        $this->mh->sendMail();
     }
 }

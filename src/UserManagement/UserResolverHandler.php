@@ -71,7 +71,7 @@ class UserResolverHandler
             $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
-            Log::addInfo('Couldnt create user');
+            Log::addInfo('Couldnt create user: ' . $e->getMessage());
             throw new UserManagementException('unknown');
         }
     }
@@ -116,7 +116,7 @@ class UserResolverHandler
             $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
-            Log::addInfo('Couldnt update user');
+            Log::addInfo('Couldnt update user: ' . $e->getMessage());
             throw new UserManagementException('unknown');
         }
     }
