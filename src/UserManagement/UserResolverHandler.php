@@ -155,7 +155,7 @@ class UserResolverHandler
     {
         $sani = App::make('helper/security');
         $token = $sani->sanitizeString($args['token']);
-        $ui = $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);
+        $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);
         if (is_object($ui)) {
             $ui->markValidated();
             // $this->set('uEmail', $ui->getUserEmail());
