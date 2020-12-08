@@ -41,6 +41,7 @@ type Mutation {
       uName: String!,
       reCaptchaToken: String
       validationUrl: String
+      template: String
   ): Boolean!
 
   "validates the users emailaddress trough the token in the validation email"

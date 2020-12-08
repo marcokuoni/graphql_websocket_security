@@ -123,8 +123,10 @@ class UserResolverHandler
 
     public function sendValidationEmail($root, $args, $context)
     {
+
         $sani = App::make('helper/security');
         $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
+        $template = $sani->sanitizeString($args['template']);
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
@@ -132,10 +134,18 @@ class UserResolverHandler
             throw new \Exception($ip_service->getErrorMessage());
         }
 
-        $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
-        if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
-            Log::addInfo('Captcha not valid');
-            throw new UserManagementException('unknown');
+        $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
+
+        if (!is_array($adminArray)) {
+            $adminArray = ['admin'];
+        }
+
+        if (!HasAccess::checkByGroup($context, $adminArray)) {
+            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+            if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
+                Log::addInfo('Captcha not valid');
+                throw new UserManagementException('unknown');
+            }
         }
 
         $uName = $sani->sanitizeString($args['uName']);
@@ -143,7 +153,7 @@ class UserResolverHandler
         $ui = App::make(UserInfoRepository::class)->getByUserName($uName);
         if (is_object($ui) && !$ui->isError()) {
             //send validation email
-            App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl);
+            App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl, $template);
             return true;
         } else {
             Log::addInfo('Couldnt send validation email to ' . $uName);
