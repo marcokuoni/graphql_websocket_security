@@ -27,7 +27,7 @@ class StatusService
         $this->config = $config;
     }
 
-    public function sendEmailValidation($user, $validationUrl, $template)
+    public function sendEmailValidation($user, $validationUrl, $template = "validate_user_email")
     {
         $language = $user->getUserDefaultLanguage();
         $loc = Localization::getInstance();
