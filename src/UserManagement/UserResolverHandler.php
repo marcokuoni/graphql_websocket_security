@@ -126,7 +126,7 @@ class UserResolverHandler
 
         $sani = App::make('helper/security');
         $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
-        $template = $sani->sanitizeString($args['template']);
+        $template = $args['template'] ? $sani->sanitizeString($args['template']) : null;
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
