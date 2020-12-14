@@ -21,7 +21,7 @@ class UserResolverHandler
         $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
 
         if (!is_array($adminArray)) {
-            $adminArray = ['admin'];
+            $adminArray = ['/Administrators'];
         }
 
         $ip_service = App::make('ip');
@@ -33,13 +33,13 @@ class UserResolverHandler
         if (!Config::get('concrete.user.registration.enabled') && !HasAccess::checkByGroup($context, $adminArray)) {
             Log::addInfo('Not allowed to create user');
             throw new UserManagementException('not_allowed');
-        }
-
-        if (Config::get('concrete.user.registration.captcha')) {
-            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
-            if (!$captcha->check($reCaptchaToken, 'signup')) {
-                Log::addInfo('Captcha not valid');
-                throw new UserManagementException('unknown');
+        } elseif (!HasAccess::checkByGroup($context, $adminArray)) {
+            if (Config::get('concrete.user.registration.captcha')) {
+                $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+                if (!$captcha->check($reCaptchaToken, 'signup')) {
+                    Log::addInfo('Captcha not valid');
+                    throw new UserManagementException('unknown');
+                }
             }
         }
 
@@ -83,7 +83,7 @@ class UserResolverHandler
         $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
 
         if (!is_array($adminArray)) {
-            $adminArray = ['admin'];
+            $adminArray = ['/Administrators'];
         }
 
         if ($ip_service->isBlacklisted()) {
@@ -97,7 +97,7 @@ class UserResolverHandler
             $email = $sani->sanitizeString($args['email']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
             $groups = $args['groups'];
-            
+
             if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername) {
                 Log::addInfo('Not allowed to update user: ' . $contextUsername);
                 throw new UserManagementException('unknown');
@@ -123,8 +123,10 @@ class UserResolverHandler
 
     public function sendValidationEmail($root, $args, $context)
     {
+
         $sani = App::make('helper/security');
         $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
+        $template = $args['template'] ? $sani->sanitizeString($args['template']) : null;
 
         $ip_service = App::make('ip');
         if ($ip_service->isBlacklisted()) {
@@ -132,10 +134,18 @@ class UserResolverHandler
             throw new \Exception($ip_service->getErrorMessage());
         }
 
-        $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
-        if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
-            Log::addInfo('Captcha not valid');
-            throw new UserManagementException('unknown');
+        $adminArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.adminArray');
+
+        if (!is_array($adminArray)) {
+            $adminArray = ['/Administrators'];
+        }
+
+        if (!HasAccess::checkByGroup($context, $adminArray)) {
+            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+            if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
+                Log::addInfo('Captcha not valid');
+                throw new UserManagementException('unknown');
+            }
         }
 
         $uName = $sani->sanitizeString($args['uName']);
@@ -143,7 +153,7 @@ class UserResolverHandler
         $ui = App::make(UserInfoRepository::class)->getByUserName($uName);
         if (is_object($ui) && !$ui->isError()) {
             //send validation email
-            App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl);
+            App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl, $template);
             return true;
         } else {
             Log::addInfo('Couldnt send validation email to ' . $uName);

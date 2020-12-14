@@ -1,0 +1,327 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: concrete5_graphql_websocket_security 4.0.10\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2020-12-08T14:30:04+01:00\n"
+"PO-Revision-Date: 2020-12-08T14:30:04+01:00\n"
+"Language: en_US\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: packages/concrete5_graphql_websocket_security/config/install.xml:5
+#: packages/concrete5_graphql_websocket_security/controller.php:85
+msgid "GraphQL / Websocket Security"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/config/install.xml:5
+msgid "Change the settings for GraphQL and the Websocket Security"
+msgstr ""
+
+#. Keywords for page /dashboard/system/environment/graphql_security
+#: packages/concrete5_graphql_websocket_security/config/install.xml:8
+msgid "graphql, websocket, security, jwt"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/controllers/single_page/dashboard/system/environment/graphql_security.php:90
+msgid "Settings updated."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/mail/validate_user_email.php:11
+msgid "Registration - Validate Email Address"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/mail/validate_user_email.php:12
+#, php-format
+msgid ""
+"\n"
+"\n"
+"You must click the following URL in order to activate your account for %s:\n"
+"\n"
+"%s \n"
+"\n"
+"Thanks for your interest in %s\n"
+"\n"
+""
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/mail/validate_user_email_enroll_account.php:11
+msgid "Account created for you - Validate Email Address"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/mail/validate_user_email_enroll_account.php:12
+#, php-format
+msgid ""
+"\n"
+"\n"
+"There was an account created for you on %s.\n"
+"\n"
+"After the activation you will have to set a new password to gain access.\n"
+"\n"
+"In order to activate please follow this URL :\n"
+"\n"
+"%s \n"
+"\n"
+"Thanks for your interest in %s\n"
+"\n"
+""
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:34
+msgid "The security packages adds different user Attributes"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:36
+msgid "Authorize secret, used to buil a new token out of a refresh token [Text]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:37
+msgid "Authorize secret revoked, blocks the ability to create new tokens for a user [Boolean]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:39
+msgid "Token not before, the tokens will just be valid after this time [Seconds]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:40
+msgid "Token expires, shows when the last token expires [Seconds, read only]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:41
+msgid "Refresh token expires, shows when the last refresh token expires [Seconds, read only]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:43
+msgid "Last request, shows the last request of an user [Seconds, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:45
+msgid "Last request IP, shows the last request IP of an user [Text, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:47
+msgid "Last request agent, shows the last request agent of an user [Text, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:49
+msgid "Last request timezone, shows the last request timezone of an user [Text, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:51
+msgid "Last request language, shows the last request language of an user [Text, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:53
+msgid "Request count, counts the user requests [Number, read only, check setting bellow]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:59
+msgid "GraphQL Security Settings"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:61
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:69
+msgid "Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:61
+msgid "Secret Key"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:64
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:72
+msgid "You are not super user and not able to change or view the secret key"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:69
+msgid "Refresh Secret Key"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:78
+msgid "A standard token will expire after how long? Default would be after 300 sec"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:78
+msgid "Token Expire [s]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:87
+msgid "A refresh token will expire after how long? Default would be after 7200 sec"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:87
+msgid "Refresh Token Expire [s]"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:96
+msgid "Refresh Cookie Settings"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:98
+msgid "How is the refresh cookie named. Use a not obviously name"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:98
+msgid "Cookie Name"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:107
+msgid "How long should the refresh token be valid? Default would be after 7200 sec"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:107
+msgid "Cookie Lifetime"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:116
+msgid "The domain who can change the cookie"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:116
+msgid "Cookie Domain"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:125
+msgid "Just https connection is accepted"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:125
+msgid "Cookie Secure"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:129
+msgid "On"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:136
+msgid "Off"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:141
+msgid "Declare if your cookie should be restricted to a first-party or same-site context"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:141
+msgid "Cookie SameSite"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:145
+msgid "Strict"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:152
+msgid "Lax"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:159
+msgid "None"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:167
+msgid "Save"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authenticate.php:58
+msgid "Unknown login error occurred. Please try again."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authenticate.php:132
+msgid "Forgot Password"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authenticate.php:169
+msgid "The two passwords provided do not match."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authenticate.php:182
+msgid "token is no longer valid, get a new email."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authorize.php:94
+msgid "No user was defined. Please try again."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Authorize.php:104
+msgid "Your session has expired. Please sign in again."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:103
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:109
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:115
+#, php-format
+msgid "Error loading reCAPTCHA: %s"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:115
+msgid "invalid response"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:131
+#, php-format
+msgid "Errors in reCAPTCHA validation: %s"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/GoogleRecaptchaCheck.php:146
+#, php-format
+msgid "reCAPTCHA V3 blocked as score returned (%1$s) is below the threshold (%2$s)"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:113
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:114
+msgid "JWT is not configured properly"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:129
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:130
+msgid "The iss do not match with this server"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:136
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:137
+msgid "The User Secret does not match or has been revoked for this user"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:141
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:142
+msgid "Expired token"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:144
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:145
+msgid "The JWT Token is invalid"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:157
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:158
+msgid "The JWT token cannot be issued for this user"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:263
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:264
+msgid "The JWT Auth secret cannot be returned"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:328
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:329
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:348
+#: packages/concrete5_graphql_websocket_security/src/Helpers/Token.php:349
+msgid "JWT Auth is not configured correctly. Please contact a site administrator."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/User/StatusService.php:42
+msgid "Validate Email Address"
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/UserManagement/User.php:135
+#, php-format
+msgid "New userLocale \"%1$s\" is not available."
+msgstr ""
+
+#: packages/concrete5_graphql_websocket_security/src/UserManagement/User.php:166
+#: packages/concrete5_graphql_websocket_security/src/UserManagement/User.php:175
+#, php-format
+msgid "New Group \"%1$s\" is not existing."
+msgstr ""

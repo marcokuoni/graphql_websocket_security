@@ -5,6 +5,8 @@ namespace C5GraphQl\User;
 use Concrete\Core\Application\Application;
 use Concrete\Core\Mail\Service as MailService;
 use Concrete\Core\Config\Repository\Repository;
+use Concrete\Core\Multilingual\Service\Detector;
+use Concrete\Core\Localization\Localization;
 
 class StatusService
 {
@@ -25,8 +27,12 @@ class StatusService
         $this->config = $config;
     }
 
-    public function sendEmailValidation($user, $validationUrl)
+    public function sendEmailValidation($user, $validationUrl, $template = "validate_user_email")
     {
+        $language = $user->getUserDefaultLanguage();
+        $loc = Localization::getInstance();
+        $loc->setLocale($language ? $language : 'de_DE');
+
         if ($validationUrl !== '') {
             $uHash = $user->setupValidation();
             $fromEmail = (string) $this->config->get('concrete.email.validate_registration.address');
@@ -43,7 +49,7 @@ class StatusService
             $this->mh->addParameter('site', tc('SiteName', $this->config->get('concrete.site')));
             $this->mh->addParameter('validationUrl', $validationUrl);
             $this->mh->to($user->getUserEmail());
-            $this->mh->load('validate_user_email', 'concrete5_graphql_websocket_security');
+            $this->mh->load($template, 'concrete5_graphql_websocket_security');
             $this->mh->sendMail();
         }
     }
