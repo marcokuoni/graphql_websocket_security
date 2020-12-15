@@ -7,11 +7,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2020-12-08T11:43:03+01:00\n"
-"PO-Revision-Date: 2020-12-08 14:08+0100\n"
+"POT-Creation-Date: 2020-12-15T13:39:40+01:00\n"
+"PO-Revision-Date: 2020-12-15T13:39:40+01:00\n"
 "Language: de_DE\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 2.4.2\n"
 
 #: packages/concrete5_graphql_websocket_security/config/install.xml:5
 #: packages/concrete5_graphql_websocket_security/controller.php:85
@@ -46,14 +45,16 @@ msgid ""
 "\n"
 "Thanks for your interest in %s\n"
 "\n"
+""
 msgstr ""
 "\n"
 "\n"
-"Um deinen Account zu aktivieren musst du dein E-Mailadresse bestätigen\n"
+"Um deinen Account für %s zu aktivieren musst du dein E-Mailadresse mit dem folgenden Link bestätigen:\n"
 "\n"
 "%s\n"
 "\n"
-"Besten Dank und freundliche Grüsse\n"
+"Besten Dank für dein Interesse an %s und freundliche Grüsse\n"
+""
 
 #: packages/concrete5_graphql_websocket_security/mail/validate_user_email_enroll_account.php:11
 msgid "Account created for you - Validate Email Address"
@@ -74,6 +75,7 @@ msgid ""
 "\n"
 "Thanks for your interest in %s\n"
 "\n"
+""
 msgstr ""
 "\n"
 "\n"
@@ -83,7 +85,8 @@ msgstr ""
 "\n"
 "Um die E-Mailadresse zu bestätigen folge bitte diesem Link: %s\n"
 "\n"
-"Freundliche Grüsse\n"
+"Besten Dank für dein Interesse an %s und freundliche Grüsse\n"
+""
 
 #: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:34
 msgid "The security packages adds different user Attributes"
@@ -326,11 +329,7 @@ msgstr ""
 msgid "JWT Auth is not configured correctly. Please contact a site administrator."
 msgstr ""
 
-#: packages/concrete5_graphql_websocket_security/src/User/StatusService.php:36
-msgid "greeting"
-msgstr "Huhu"
-
-#: packages/concrete5_graphql_websocket_security/src/User/StatusService.php:44
+#: packages/concrete5_graphql_websocket_security/src/User/StatusService.php:43
 msgid "Validate Email Address"
 msgstr ""
 

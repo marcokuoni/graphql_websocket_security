@@ -4,7 +4,6 @@ namespace C5GraphQl\UserManagement;
 
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Support\Facade\Config;
-use Concrete\Core\User\User as ConcreteUser;
 use Concrete\Core\User\Group\Group;
 use Concrete\Core\Localization\Localization;
 use Doctrine\ORM\EntityManagerInterface;
@@ -59,7 +58,7 @@ class User
 
                 //send validation email
                 if (Config::get('concrete.user.registration.validate_email')) {
-                    App::make(StatusService::class)->sendEmailValidation($newUser, $validationUrl);
+                    App::make(StatusService::class)->sendEmailValidation($newUser, $validationUrl, null);
                 }
 
                 $this->updateLocale($entity, $userLocale, $validationErrors);
@@ -101,7 +100,7 @@ class User
 
                     $this->entityManager->persist($entity);
                     $this->entityManager->flush();
-                    App::make(StatusService::class)->sendEmailValidation($userInfo, $validationUrl);
+                    App::make(StatusService::class)->sendEmailValidation($userInfo, $validationUrl, null);
                 }
 
                 $this->updateLocale($entity, $userLocale, $validationErrors);
