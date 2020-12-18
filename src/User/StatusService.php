@@ -5,7 +5,6 @@ namespace C5GraphQl\User;
 use Concrete\Core\Application\Application;
 use Concrete\Core\Mail\Service as MailService;
 use Concrete\Core\Config\Repository\Repository;
-use Concrete\Core\Multilingual\Service\Detector;
 use Concrete\Core\Localization\Localization;
 
 class StatusService
@@ -27,8 +26,9 @@ class StatusService
         $this->config = $config;
     }
 
-    public function sendEmailValidation($user, $validationUrl, $template = "validate_user_email")
+    public function sendEmailValidation($user, $validationUrl, $template)
     {
+        $template = $template ? $template : "validate_user_email";
         $language = $user->getUserDefaultLanguage();
         $loc = Localization::getInstance();
         $loc->setLocale($language ? $language : 'de_DE');
