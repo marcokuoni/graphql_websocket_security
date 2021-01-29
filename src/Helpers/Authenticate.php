@@ -84,12 +84,18 @@ class Authenticate
         return true;
     }
 
-    public function forgotPassword($username, $changePasswordUrl)
+    public function forgotPassword($username, $changePasswordUrl, $reCaptchaToken)
     {
         $error = App::make('helper/validation/error');
 
         if ($username) {
             try {
+                $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+                if (!$captcha->check($reCaptchaToken, 'forgotPassword')) {
+                    Log::addInfo('forgot password captcha not valid');
+                    throw new SecurityException('unknown');
+                }
+
                 $e = App::make('error');
                 if (!App::make(EmailValidator::class)->isValid($username, $e)) {
                     Log::addInfo('Email address not valid: ' . $e->toText());
@@ -150,36 +156,47 @@ class Authenticate
         }
     }
 
-    public function changePassword($password, $passwordConfirm, $token)
+    public function changePassword($password, $passwordConfirm, $token, $reCaptchaToken)
     {
         $e = Core::make('helper/validation/error');
-        if (is_string($token)) {
-            // $ui = UserInfo::getByValidationHash($token);
-            $ui = \Core::make('Concrete\Core\User\UserInfoRepository')->getByValidationHash($token);
-        } else {
-            $ui = null;
-        }
-        if (is_object($ui)) {
-            $vh = new ValidationHash();
-            if ($vh->isValid($token)) {
-                if (isset($password) && strlen($password)) {
-                    Core::make('validator/password')->isValidFor($password, $ui, $e);
 
-                    if (strlen($passwordConfirm) && $passwordConfirm !== $password) {
-                        $e->add(t('The two passwords provided do not match.'));
-                    }
+        try {
+            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+            if (!$captcha->check($reCaptchaToken, 'changePassword')) {
+                Log::addInfo('change password captcha not valid');
+                throw new SecurityException('unknown');
+            }
 
-                    if (!$e->has()) {
-                        $ui->changePassword($password);
-                        $h = Core::make('helper/validation/identifier');
-                        $h->deleteKey('UserValidationHashes', 'uHash', $token);
+            if (is_string($token)) {
+                // $ui = UserInfo::getByValidationHash($token);
+                $ui = \Core::make('Concrete\Core\User\UserInfoRepository')->getByValidationHash($token);
+            } else {
+                $ui = null;
+            }
+            if (is_object($ui)) {
+                $vh = new ValidationHash();
+                if ($vh->isValid($token)) {
+                    if (isset($password) && strlen($password)) {
+                        Core::make('validator/password')->isValidFor($password, $ui, $e);
 
-                        return [];
+                        if (strlen($passwordConfirm) && $passwordConfirm !== $password) {
+                            $e->add(t('The two passwords provided do not match.'));
+                        }
+
+                        if (!$e->has()) {
+                            $ui->changePassword($password);
+                            $h = Core::make('helper/validation/identifier');
+                            $h->deleteKey('UserValidationHashes', 'uHash', $token);
+
+                            return [];
+                        }
                     }
                 }
+            } else {
+                $e->add(t('token is no longer valid, get a new email.'));
             }
-        } else {
-            $e->add(t('token is no longer valid, get a new email.'));
+        } catch (\Exception $error) {
+            $e->add($error->getMessage());
         }
         return $e->getList();
     }

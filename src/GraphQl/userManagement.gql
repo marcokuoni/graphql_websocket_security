@@ -19,7 +19,7 @@ type Mutation {
       email: String!
       password: String!
       username: String
-      reCaptchaToken: String
+      reCaptchaToken: String!
       validationUrl: String
       userLocale: String
       "group by path with leading slash"
@@ -39,7 +39,7 @@ type Mutation {
 "sends a validation email to the emailaddress of the user"
   sendValidationEmail(
       uName: String!,
-      reCaptchaToken: String
+      reCaptchaToken: String!
       validationUrl: String
       template: String
   ): Boolean!
@@ -47,6 +47,7 @@ type Mutation {
   "validates the users emailaddress trough the token in the validation email"
   validateEmail(
       token: String!
+      reCaptchaToken: String!
   ): Boolean!
   
 }

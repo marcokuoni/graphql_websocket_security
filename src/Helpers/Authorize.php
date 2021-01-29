@@ -28,7 +28,7 @@ class Authorize
      * @throws \Exception
      * @since 0.0.1
      */
-    public function loginAndGetToken($username, $password)
+    public function loginAndGetToken($username, $password, $reCaptchaToken)
     {
         $accessToken = '';
         $nonce = '';
@@ -36,6 +36,12 @@ class Authorize
         $authError = null;
 
         try {
+            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+            if (!$captcha->check($reCaptchaToken, 'login')) {
+                Log::addInfo('Login captcha not valid');
+                throw new SecurityException('unknown');
+            }
+
             $authenticate = App::make(\Helpers\Authenticate::class);
             //get user without login
             $user = new User($username, $password, true);
@@ -79,15 +85,20 @@ class Authorize
         return ['authError' => $authError, 'authToken' => $accessToken, 'nonce' => $token];
     }
 
-    public function checkNonce($user, $nonce, $u2SAPass)
+    public function checkNonce($user, $nonce, $u2SAPass, $reCaptchaToken)
     {
         $accessToken = '';
         $token = '';
         $error = '';
         $ip_service = Core::make('ip');
-        $settingsManager = new settingsManager();
+        $settingsManager = new SettingsManager();
 
         try {
+            $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+            if (!$captcha->check($reCaptchaToken, 'checkNonce')) {
+                Log::addInfo('check nonce captcha not valid');
+                throw new SecurityException('unknown');
+            }
             // This is second screen with GA code
             if (!isset($user) || !isset($nonce) || !isset($u2SAPass)) {
                 // somebody got here directly without going through the first screen so there are no user name and token

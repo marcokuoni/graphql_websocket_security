@@ -37,7 +37,7 @@ class UserResolverHandler
             if (Config::get('concrete.user.registration.captcha')) {
                 $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
                 if (!$captcha->check($reCaptchaToken, 'signup')) {
-                    Log::addInfo('Captcha not valid');
+                    Log::addInfo('create user captcha not valid');
                     throw new UserManagementException('unknown');
                 }
             }
@@ -143,7 +143,7 @@ class UserResolverHandler
         if (!HasAccess::checkByGroup($context, $adminArray)) {
             $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
             if (!$captcha->check($reCaptchaToken, 'validationEmail')) {
-                Log::addInfo('Captcha not valid');
+                Log::addInfo('send validation captcha not valid');
                 throw new UserManagementException('unknown');
             }
         }
@@ -165,6 +165,14 @@ class UserResolverHandler
     {
         $sani = App::make('helper/security');
         $token = $sani->sanitizeString($args['token']);
+        $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
+
+        $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
+        if (!$captcha->check($reCaptchaToken, 'validateEmail')) {
+            Log::addInfo('validate email captcha not valid');
+            throw new UserManagementException('unknown');
+        }
+
         $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);
         if (is_object($ui)) {
             $ui->markValidated();
