@@ -10,7 +10,12 @@ class UserManagementResolver
 {
     public static function get()
     {
-        $queryType = [];
+        $queryType = [
+            'getDisplayName' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->getDisplayName($root, $args, $context);
+            },
+        ];
 
         $mutationType = [
             'createUser' => function ($root, $args, $context) {

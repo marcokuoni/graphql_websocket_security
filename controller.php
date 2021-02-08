@@ -20,7 +20,7 @@ class Controller extends Package
         'concrete5_graphql_websocket' => '2.0.0'
     ];
     protected $appVersionRequired = '8.5.1';
-    protected $pkgVersion = '5.0.1';
+    protected $pkgVersion = '5.0.2';
     protected $pkgHandle = 'concrete5_graphql_websocket_security';
     protected $pkgName = 'GraphQL with Websocket Security';
     protected $pkgDescription = 'Helps to use GraphQL and Websocket in Concrete5 securley';
@@ -93,6 +93,14 @@ class Controller extends Package
         $this->installUserAttribute('graphql_jwt_token_not_before', 'Token not before', $number, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_token_expires', 'Token expires', $number, $pkg, $custSet);
         $this->installUserAttribute('graphql_jwt_refresh_token_expires', 'Refresh token expires', $number, $pkg, $custSet);
+
+
+        $appSet = AttributeSet::getByHandle('app');
+        if (!is_object($appSet)) {
+            $appSet = $uakc->addSet('app', t('Application'), $pkg);
+        }
+
+        $this->installUserAttribute('app_display_name', t('Display-Name'), $text, $pkg, $appSet);
     }
 
     private function installUserAttribute($handle, $name, $type, $pkg, $set, $data = null)

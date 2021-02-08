@@ -13,7 +13,6 @@ class Register
         SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/security.gql');
         SchemaBuilder::registerResolverForMerge(SecurityResolver::get());
 
-        SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/user.gql');
         SchemaBuilder::registerSchemaFileForMerge(__DIR__ . '/userManagement.gql');
         SchemaBuilder::registerResolverForMerge(UserManagementResolver::get());
     }

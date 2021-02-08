@@ -77,7 +77,7 @@ class User
         }
     }
 
-    public function update($userInfo, $email = null, $validationUrl = null, $userLocale = null, $groups = null)
+    public function update($userInfo, $email = null, $validationUrl = null, $userLocale = null, $groups = null, $displayName = null)
     {
         $validationErrors = App::make('helper/validation/error');
 
@@ -105,6 +105,7 @@ class User
 
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
+                $this->updateDisplayName($userInfo, $displayName);
 
                 $result['result'] = ['uEmail' => $userInfo->getUserEmail(), 'uName' => $userInfo->getUserName()];
 
@@ -176,6 +177,13 @@ class User
                     }
                 }
             }
+        }
+    }
+
+    private function updateDisplayName(&$userInfo, &$displayName)
+    {
+        if (isset($displayName) && is_string($displayName) && ($displayName !== '')) {
+            $userInfo->setAttribute("app_display_name", $displayName);
         }
     }
 }

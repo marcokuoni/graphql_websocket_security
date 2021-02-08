@@ -17,5 +17,8 @@ return [
     ],
     'adminArray' => [
         '/Administrators'
-    ]
+    ],
+    'appManagerArray' => [
+        '/Administrators'
+    ],
 ];

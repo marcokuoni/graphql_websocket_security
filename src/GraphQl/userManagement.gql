@@ -1,3 +1,8 @@
+type User {
+    uName: String!,
+    uEmail: String!,
+}
+
 type UserResult {
     result: User,
     validationErrors: [String]!
@@ -32,6 +37,7 @@ type Mutation {
       email: String
       validationUrl: String
       userLocale: String
+      displayName: String
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -53,6 +59,7 @@ type Mutation {
 }
 
 type Query {
-  "gql file without query is not working :("
-  dummy: String
+  getDisplayName(
+    username: String!
+  ): String!
 }

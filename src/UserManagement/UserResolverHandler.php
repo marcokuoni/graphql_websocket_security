@@ -96,6 +96,7 @@ class UserResolverHandler
             $contextUsername = $context['user']->uName;
             $email = $sani->sanitizeString($args['email']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
+            $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
 
             if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername) {
@@ -113,7 +114,7 @@ class UserResolverHandler
             //update user
             $user = App::make(User::class);
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups);
+            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups, $displayName);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             Log::addInfo('Couldnt update user: ' . $e->getMessage());
@@ -186,5 +187,43 @@ class UserResolverHandler
             return true;
         }
         return false;
+    }
+
+    public function getDisplayName($root, $args, $context)
+    {
+        $sani = App::make('helper/security');
+        $ip_service = App::make('ip');
+        $appManagerArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.appManagerArray');
+
+        if (!is_array($appManagerArray)) {
+            $appManagerArray = ['/Administrators'];
+        }
+
+        if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
+            throw new \Exception($ip_service->getErrorMessage());
+        }
+
+        try {
+            $username = $sani->sanitizeString($args['username']);
+            $contextUsername = $context['user']->uName;
+
+            if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername) {
+                Log::addInfo('Not allowed to get display name: ' . $contextUsername);
+                throw new UserManagementException('unknown');
+            }
+            //check for existing user
+            $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+
+            if (!$userInfo) {
+                Log::addInfo('Existing user not found: ' . $username);
+                throw new UserManagementException('user_not_found');
+            }
+
+            return $userInfo->getAttribute("app_display_name");
+        } catch (\Exception $e) {
+            Log::addInfo('Couldnt get display name: ' . $e->getMessage());
+            throw new UserManagementException('unknown');
+        }
     }
 }

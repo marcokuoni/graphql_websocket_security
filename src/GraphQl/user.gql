@@ -1,9 +1,0 @@
-type User {
-    uName: String!,
-    uEmail: String!,
-}
-
-type Query {
-  "gql file without query is not working :("
-  dummy: String
-}
