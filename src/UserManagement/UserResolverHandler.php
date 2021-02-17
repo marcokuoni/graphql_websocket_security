@@ -222,7 +222,7 @@ class UserResolverHandler
             }
 
             if (!$userInfo) {
-                Log::addInfo('Existing user not found: ' . $username);
+                Log::addInfo('Existing user not found: ' . $username . $id);
                 throw new UserManagementException('user_not_found');
             }
 
