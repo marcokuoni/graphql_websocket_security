@@ -206,14 +206,20 @@ class UserResolverHandler
 
         try {
             $username = $sani->sanitizeString($args['username']);
+            $id = $sani->sanitizeString($args['id']);
             $contextUsername = $context['user']->uName;
+            $contextId = $context['user']->uID;
 
-            if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername) {
+            if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername && $id !== $contextId) {
                 Log::addInfo('Not allowed to get display name: ' . $contextUsername);
                 throw new UserManagementException('unknown');
             }
             //check for existing user
-            $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+            if ($username) {
+                $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+            } else {
+                $userInfo = App::make(UserInfoRepository::class)->getByID($id);
+            }
 
             if (!$userInfo) {
                 Log::addInfo('Existing user not found: ' . $username);

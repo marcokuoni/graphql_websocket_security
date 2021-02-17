@@ -60,6 +60,7 @@ type Mutation {
 
 type Query {
   getDisplayName(
-    username: String!
+    id: ID
+    username: String
   ): String!
 }
