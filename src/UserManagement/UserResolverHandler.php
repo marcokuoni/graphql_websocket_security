@@ -174,8 +174,13 @@ class UserResolverHandler
             throw new UserManagementException('unknown');
         }
 
-        $ui = App::make(UserInfoRepository::class)->getByValidationHash($token);
-        if (is_object($ui)) {
+        if (!isset($token)) {
+            Log::addInfo('token not set');
+            throw new UserManagementException('unknown');
+        }
+
+        $ui = App::make(UserInfoRepository::class)->getByValidationHash($token, false);
+        if ($ui) {
             $ui->markValidated();
             // $this->set('uEmail', $ui->getUserEmail());
             // if ($ui->triggerActivate('register_activate', USER_SUPER_ID)) {
@@ -186,6 +191,7 @@ class UserResolverHandler
             // $this->redirect('/login/callback/concrete', 'email_validated', $mode);
             return true;
         }
+
         return false;
     }
 
