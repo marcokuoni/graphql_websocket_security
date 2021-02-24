@@ -53,7 +53,7 @@ type Mutation {
   "validates the users emailaddress trough the token in the validation email"
   validateEmail(
       token: String!
-      reCaptchaToken: String!
+      reCaptchaToken: String
   ): Boolean!
   
 }

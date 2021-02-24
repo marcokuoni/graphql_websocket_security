@@ -169,7 +169,7 @@ class UserResolverHandler
         $reCaptchaToken = $sani->sanitizeString($args['reCaptchaToken']);
 
         $captcha = App::make(\Helpers\GoogleRecaptchaCheck::class);
-        if (!$captcha->check($reCaptchaToken, 'validateEmail')) {
+        if (isset($reCaptchaToken) && is_string($reCaptchaToken) && ($reCaptchaToken !== '') && !$captcha->check($reCaptchaToken, 'validateEmail')) {
             Log::addInfo('validate email captcha not valid');
             throw new UserManagementException('unknown');
         }
