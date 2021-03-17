@@ -94,7 +94,7 @@ class User
             if (!$validationErrors->has()) {
                 $entity = $userInfo->getEntityObject();
 
-                if ($email && $email !== '' && Config::get('concrete.user.registration.validate_email')) {
+                if ($email && $email !== '' && $email !== $userInfo->getUserEmail() && Config::get('concrete.user.registration.validate_email')) {
                     $entity->setUserIsValidated(0);
                     $entity->setUserEmail($email);
 
