@@ -104,7 +104,7 @@ class UserResolverHandler
                 throw new UserManagementException('unknown');
             }
             //check for existing user
-            $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+            $userInfo = App::make(UserInfoRepository::class)->getByUserName($username);
 
             if (!$userInfo) {
                 Log::addInfo('Existing user not found: ' . $username);
