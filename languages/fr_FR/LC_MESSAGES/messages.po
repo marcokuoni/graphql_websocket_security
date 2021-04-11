@@ -8,9 +8,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2020-12-15T13:39:40+01:00\n"
-"PO-Revision-Date: 2020-12-15T13:39:40+01:00\n"
+"PO-Revision-Date: 2021-04-11 13:01+0200\n"
 "Language: fr_FR\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: packages/concrete5_graphql_websocket_security/config/install.xml:5
 #: packages/concrete5_graphql_websocket_security/controller.php:85
@@ -32,7 +33,7 @@ msgstr ""
 
 #: packages/concrete5_graphql_websocket_security/mail/validate_user_email.php:11
 msgid "Registration - Validate Email Address"
-msgstr ""
+msgstr "Enregistrement – confirmer l’adresse e-mail"
 
 #: packages/concrete5_graphql_websocket_security/mail/validate_user_email.php:12
 #, php-format
@@ -45,12 +46,18 @@ msgid ""
 "\n"
 "Thanks for your interest in %s\n"
 "\n"
-""
 msgstr ""
+"\n"
+"\n"
+"Pour activer un compte pour %s, veuillez confirmer votre adresse e-mail avec ce lien : \n"
+"\n"
+"%s\n"
+"\n"
+"Merci et meilleures salutations\n"
 
 #: packages/concrete5_graphql_websocket_security/mail/validate_user_email_enroll_account.php:11
 msgid "Account created for you - Validate Email Address"
-msgstr ""
+msgstr "Votre compte est activé - confirmer l’adresse e-mail"
 
 #: packages/concrete5_graphql_websocket_security/mail/validate_user_email_enroll_account.php:12
 #, php-format
@@ -67,8 +74,17 @@ msgid ""
 "\n"
 "Thanks for your interest in %s\n"
 "\n"
-""
 msgstr ""
+"\n"
+"\n"
+"Un compte a été activé pour vous à %s\n"
+"\n"
+"\n"
+"Pour confirmer votre adresse e-mail, veuillez suivre ce lien : %s\n"
+"\n"
+"Avant de vous connecter, vous devez réinitialiser votre mot de passe.\n"
+"\n"
+"Merci pour votre intérêt et meilleures salutations\n"
 
 #: packages/concrete5_graphql_websocket_security/single_pages/dashboard/system/environment/graphql_security.php:34
 msgid "The security packages adds different user Attributes"
