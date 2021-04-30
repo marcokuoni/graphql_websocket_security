@@ -121,7 +121,7 @@ class Token
 
             $baseUrl = sprintf(
                 "%s://%s",
-                isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
+                $this->isSecure() ? 'https' : 'http',
                 $_SERVER['SERVER_NAME']
             );
             // websocketserver has no server_name
@@ -161,11 +161,17 @@ class Token
         return $notBefore;
     }
 
+    private function isSecure() {
+        return
+          (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+          || $_SERVER['SERVER_PORT'] == 443;
+      }
+
     private function createToken($user, $notBefore, $expiration)
     {
         $baseUrl = sprintf(
             "%s://%s",
-            isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
+            $this->isSecure() ? 'https' : 'http',
             $_SERVER['SERVER_NAME']
         );
 
