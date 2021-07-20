@@ -15,6 +15,10 @@ class UserManagementResolver
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->getDisplayName($root, $args, $context);
             },
+            'getDisplayNameById' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->getDisplayName($root, $args, $context);
+            },
         ];
 
         $mutationType = [
@@ -26,7 +30,15 @@ class UserManagementResolver
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->updateUser($root, $args, $context);
             },
+            'updateUserById' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->updateUser($root, $args, $context);
+            },
             'sendValidationEmail' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->sendValidationEmail($root, $args, $context);
+            },
+            'sendValidationEmailById' => function ($root, $args, $context) {
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->sendValidationEmail($root, $args, $context);
             },

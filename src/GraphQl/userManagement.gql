@@ -1,4 +1,5 @@
 type User {
+    id: ID!,
     uName: String!,
     uEmail: String!,
 }
@@ -19,7 +20,7 @@ input Groups {
 }
 
 type Mutation {
-  "Returns result (userName and email), a validationErrors array"
+  "Returns result (id, userName and email), a validationErrors array"
   createUser(
       email: String!
       password: String!
@@ -31,9 +32,18 @@ type Mutation {
       groups: [Groups]
   ): UserResult!
 
-  "Returns result (userName and email), a validationErrors array"
+  "Returns result (id, userName and email), a validationErrors array"
   updateUser(
       username: String!
+      email: String
+      validationUrl: String
+      userLocale: String
+      displayName: String
+      "group by path with leading slash"
+      groups: [Groups]
+  ): UserResult!
+  updateUserById(
+      id: ID!
       email: String
       validationUrl: String
       userLocale: String
@@ -44,7 +54,13 @@ type Mutation {
 
 "sends a validation email to the emailaddress of the user"
   sendValidationEmail(
-      uName: String!,
+      uName: String!
+      reCaptchaToken: String!
+      validationUrl: String
+      template: String
+  ): Boolean!
+  sendValidationEmailById(
+      id: ID!
       reCaptchaToken: String!
       validationUrl: String
       template: String
@@ -60,7 +76,9 @@ type Mutation {
 
 type Query {
   getDisplayName(
-    id: ID
-    username: String
+    username: String!
+  ): String!
+  getDisplayNameById(
+    id: ID!
   ): String!
 }

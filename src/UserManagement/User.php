@@ -64,7 +64,7 @@ class User
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
 
-                $result['result'] = ['uEmail' => $newUser->getUserEmail(), 'uName' => $newUser->getUserName()];
+                $result['result'] = ['id' => $newUser->getUserID(), 'uEmail' => $newUser->getUserEmail(), 'uName' => $newUser->getUserName()];
                 return $result;
             } else {
                 foreach ($validationErrors->getList() as $value) {
@@ -107,7 +107,7 @@ class User
                 $this->updateGroups($userInfo, $groups, $validationErrors);
                 $this->updateDisplayName($userInfo, $displayName);
 
-                $result['result'] = ['uEmail' => $userInfo->getUserEmail(), 'uName' => $userInfo->getUserName()];
+                $result['result'] = ['id' => $userInfo->getUserID(), 'uEmail' => $userInfo->getUserEmail(), 'uName' => $userInfo->getUserName()];
 
                 foreach ($validationErrors->getList() as $value) {
                     $result['validationErrors'][] = $value->getMessage();

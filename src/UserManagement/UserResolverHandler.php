@@ -92,22 +92,28 @@ class UserResolverHandler
         }
 
         try {
+            $id = (int) $args['id'];
             $username = $sani->sanitizeString($args['username']);
             $contextUsername = $context['user']->uName;
+            $contextId = (int)$context['user']->uID;
             $email = $sani->sanitizeString($args['email']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
             $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
 
-            if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername) {
+            if (!HasAccess::checkByGroup($context, $adminArray) && $username !== $contextUsername && $id !== $contextId) {
                 Log::addInfo('Not allowed to update user: ' . $contextUsername);
                 throw new UserManagementException('unknown');
             }
             //check for existing user
-            $userInfo = App::make(UserInfoRepository::class)->getByUserName($username);
+            if ($username && $username !== '') {
+                $userInfo = App::make(UserInfoRepository::class)->getByUserName($username);
+            } else {
+                $userInfo = App::make(UserInfoRepository::class)->getByID($id);
+            }
 
             if (!$userInfo) {
-                Log::addInfo('Existing user not found: ' . $username);
+                Log::addInfo('Existing user not found: ' . $username . $id);
                 throw new UserManagementException('user_not_found');
             }
 
@@ -149,15 +155,20 @@ class UserResolverHandler
             }
         }
 
+        $id = (int) $args['id'];
         $uName = $sani->sanitizeString($args['uName']);
         $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-        $ui = App::make(UserInfoRepository::class)->getByUserName($uName);
-        if (is_object($ui) && !$ui->isError()) {
+        if ($uName && $uName !== '') {
+            $userInfo = App::make(UserInfoRepository::class)->getByUserName($uName);
+        } else {
+            $userInfo = App::make(UserInfoRepository::class)->getByID($id);
+        }
+        if (is_object($userInfo) && !$userInfo->isError()) {
             //send validation email
-            App::make(StatusService::class)->sendEmailValidation($ui, $validationUrl, $template);
+            App::make(StatusService::class)->sendEmailValidation($userInfo, $validationUrl, $template);
             return true;
         } else {
-            Log::addInfo('Couldnt send validation email to ' . $uName);
+            Log::addInfo('Couldnt send validation email to ' . $uName . $id);
             throw new UserManagementException('unknown');
         }
     }
@@ -212,9 +223,9 @@ class UserResolverHandler
 
         try {
             $username = $sani->sanitizeString($args['username']);
-            $id = $sani->sanitizeString($args['id']);
+            $id = (int)$args['id'];
             $contextUsername = $context['user']->uName;
-            $contextId = $context['user']->uID;
+            $contextId = (int)$context['user']->uID;
 
             if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername && $id !== $contextId) {
                 Log::addInfo('Not allowed to get display name: ' . $contextUsername);
