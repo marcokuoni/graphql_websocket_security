@@ -1,7 +1,12 @@
+scalar Upload
+
 type User {
     id: ID!,
+    uID: ID!,
     uName: String!,
     uEmail: String!,
+    uDefaultLanguage: String,
+    uAvatar: String!
 }
 
 type UserResult {
@@ -28,6 +33,7 @@ type Mutation {
       reCaptchaToken: String!
       validationUrl: String
       userLocale: String
+      avatar: Upload
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -39,6 +45,7 @@ type Mutation {
       validationUrl: String
       userLocale: String
       displayName: String
+      avatar: Upload
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -48,6 +55,7 @@ type Mutation {
       validationUrl: String
       userLocale: String
       displayName: String
+      avatar: Upload
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -71,7 +79,6 @@ type Mutation {
       token: String!
       reCaptchaToken: String
   ): Boolean!
-  
 }
 
 type Query {

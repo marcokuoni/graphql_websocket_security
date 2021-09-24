@@ -6,7 +6,7 @@ use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Support\Facade\Config;
 use Concrete5GraphqlWebsocket\Helpers\HasAccess;
 use Concrete\Core\User\UserInfoRepository;
-use Concrete\Core\User\User as C5User;
+use function Siler\{array_get_arr};
 
 use C5GraphQl\UserManagement\User;
 use C5GraphQl\User\StatusService;
@@ -48,6 +48,7 @@ class UserResolverHandler
             $email = $sani->sanitizeString($args['email']);
             $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
+            $avatar = array_get_arr($args, 'avatar');
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
             $groups = $args['groups'];
             //check for existing user
@@ -68,7 +69,7 @@ class UserResolverHandler
             }
 
             //create user
-            $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $groups);
+            $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $avatar, $groups);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             Log::addInfo('Couldnt create user: ' . $e->getMessage());
@@ -98,6 +99,7 @@ class UserResolverHandler
             $contextId = (int)$context['user']->uID;
             $email = $sani->sanitizeString($args['email']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
+            $avatar = array_get_arr($args, 'avatar');
             $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
 
@@ -120,7 +122,7 @@ class UserResolverHandler
             //update user
             $user = App::make(User::class);
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $groups, $displayName);
+            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $avatar, $groups, $displayName);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             Log::addInfo('Couldnt update user: ' . $e->getMessage());
