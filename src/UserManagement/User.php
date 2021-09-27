@@ -24,7 +24,7 @@ class User
         $this->entityManager = $entityManager;
     }
 
-    public function create($email, $password, $username = null, $validationUrl = null, $userLocale = null, $avatar = null, $groups = null)
+    public function create($email, $password, $username = null, $validationUrl = null, $userLocale = null, $avatar = null, $removeAvatar = null, $groups = null, $displayName = null)
     {
         $validationErrors = App::make('helper/validation/error');
 
@@ -62,9 +62,10 @@ class User
                     App::make(StatusService::class)->sendEmailValidation($newUser, $validationUrl, null);
                 }
 
+                $this->updateDisplayName($userInfo, $displayName);
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
-                $this->updateAvatar($userInfo, $avatar, $validationErrors);
+                $this->updateAvatar($userInfo, $avatar, $removeAvatar, $validationErrors);
 
                 $result['result'] = [
                     'id' => $userInfo->getUserID(), 
@@ -87,7 +88,7 @@ class User
         }
     }
 
-    public function update($userInfo, $email = null, $validationUrl = null, $userLocale = null, $avatar = null, $groups = null, $displayName = null)
+    public function update($userInfo, $email = null, $password = null, $validationUrl = null, $userLocale = null, $avatar = null, $removeAvatar = null, $groups = null, $displayName = null)
     {
         $validationErrors = App::make('helper/validation/error');
 
@@ -113,10 +114,11 @@ class User
                     App::make(StatusService::class)->sendEmailValidation($userInfo, $validationUrl, null);
                 }
 
+                $this->updateDisplayName($userInfo, $displayName);
+                $this->updatePassword($userInfo, $password);
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
-                $this->updateDisplayName($userInfo, $displayName);
-                $this->updateAvatar($userInfo, $avatar, $validationErrors);
+                $this->updateAvatar($userInfo, $avatar, $removeAvatar, $validationErrors);
 
                 $result['result'] = [
                     'id' => $userInfo->getUserID(), 
@@ -204,8 +206,14 @@ class User
             $userInfo->setAttribute("app_display_name", $displayName);
         }
     }
+    private function updatePassword(&$userInfo, &$password)
+    {
+        if (isset($password) && is_string($password) && ($password !== '')) {
+            $userInfo->changePassword($password);
+        }
+    }
 
-    private function updateAvatar(&$userInfo, &$avatarFile, &$validationErrors)
+    private function updateAvatar(&$userInfo, &$avatarFile, &$removeAvatar, &$validationErrors)
     {
         if (isset($avatarFile) && (is_uploaded_file($avatarFile['tmp_name']))) {
             $service = App::make("helper/validation/file");
@@ -235,7 +243,8 @@ class User
                     $validationErrors->add(t('Error while setting profile picture.'));
                 }
             }
-        } else {
+        } 
+        if(!!$removeAvatar) {
             $service = App::make('user/avatar');
             $service->removeAvatar($userInfo);
         }

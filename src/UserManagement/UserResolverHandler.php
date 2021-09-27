@@ -48,8 +48,10 @@ class UserResolverHandler
             $email = $sani->sanitizeString($args['email']);
             $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
-            $avatar = array_get_arr($args, 'avatar');
+            $avatar = $args['avatar'] ? array_get_arr($args, 'avatar') : null;
+            $removeAvatar = (boolean) $args['removeAvatar'];
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
+            $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
             //check for existing user
             $ui = App::make(UserInfoRepository::class)->getByEmail($email);
@@ -69,7 +71,7 @@ class UserResolverHandler
             }
 
             //create user
-            $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $avatar, $groups);
+            $result = $user->create($email, $password, $username, $validationUrl, $userLocale, $avatar, $removeAvatar, $groups, $displayName);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             Log::addInfo('Couldnt create user: ' . $e->getMessage());
@@ -98,8 +100,10 @@ class UserResolverHandler
             $contextUsername = $context['user']->uName;
             $contextId = (int)$context['user']->uID;
             $email = $sani->sanitizeString($args['email']);
+            $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
-            $avatar = array_get_arr($args, 'avatar');
+            $avatar = $args['avatar'] ? array_get_arr($args, 'avatar') : null;
+            $removeAvatar = (boolean) $args['removeAvatar'];
             $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
 
@@ -122,7 +126,7 @@ class UserResolverHandler
             //update user
             $user = App::make(User::class);
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
-            $result = $user->update($userInfo, $email, $validationUrl, $userLocale, $avatar, $groups, $displayName);
+            $result = $user->update($userInfo, $email, $password, $validationUrl, $userLocale, $avatar, $removeAvatar, $groups, $displayName);
             return json_decode(json_encode($result));
         } catch (\Exception $e) {
             Log::addInfo('Couldnt update user: ' . $e->getMessage());
@@ -246,6 +250,58 @@ class UserResolverHandler
             }
 
             return $userInfo->getAttribute("app_display_name");
+        } catch (\Exception $e) {
+            Log::addInfo('Couldnt get display name: ' . $e->getMessage());
+            throw new UserManagementException('unknown');
+        }
+    }
+
+    public function getUser($root, $args, $context)
+    {
+        $sani = App::make('helper/security');
+        $ip_service = App::make('ip');
+        $appManagerArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.appManagerArray');
+
+        if (!is_array($appManagerArray)) {
+            $appManagerArray = ['/Administrators'];
+        }
+
+        if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
+            throw new \Exception($ip_service->getErrorMessage());
+        }
+
+        try {
+            $username = $sani->sanitizeString($args['username']);
+            $id = (int)$args['id'];
+            $contextUsername = $context['user']->uName;
+            $contextId = (int)$context['user']->uID;
+
+            if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername && $id !== $contextId) {
+                Log::addInfo('Not allowed to get display name: ' . $contextUsername);
+                throw new UserManagementException('unknown');
+            }
+            //check for existing user
+            if ($username) {
+                $userInfo = App::make(UserInfoRepository::class)->getByName($username);
+            } else {
+                $userInfo = App::make(UserInfoRepository::class)->getByID($id);
+            }
+
+            if (!$userInfo) {
+                Log::addInfo('Existing user not found: ' . $username . $id);
+                throw new UserManagementException('user_not_found');
+            }
+
+            return [
+                'id' => $userInfo->getUserID(), 
+                "uID" => $userInfo->getUserID(),
+                'uName' => $userInfo->getUserName(),
+                'uEmail' => $userInfo->getUserEmail(), 
+                "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
+                "uAvatar" => $userInfo->getUserAvatar()->getPath(),
+                "displayName" => $userInfo->getAttribute("app_display_name"),
+            ];
         } catch (\Exception $e) {
             Log::addInfo('Couldnt get display name: ' . $e->getMessage());
             throw new UserManagementException('unknown');
