@@ -1,7 +1,31 @@
-type User {
+scalar Upload
+
+interface UserBasic {
     id: ID!,
+    uID: ID!,
     uName: String!,
     uEmail: String!,
+    uDefaultLanguage: String,
+    uAvatar: String!
+}
+
+type User implements UserBasic {
+    id: ID!,
+    uID: ID!,
+    uName: String!,
+    uEmail: String!,
+    uDefaultLanguage: String,
+    uAvatar: String!
+}
+
+type UserExtended implements UserBasic {
+    id: ID!,
+    uID: ID!,
+    uName: String!,
+    uEmail: String!,
+    uDefaultLanguage: String,
+    uAvatar: String!
+    displayName: String!
 }
 
 type UserResult {
@@ -28,6 +52,9 @@ type Mutation {
       reCaptchaToken: String!
       validationUrl: String
       userLocale: String
+      displayName: String
+      avatar: Upload
+      removeAvatar: Boolean
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -36,18 +63,23 @@ type Mutation {
   updateUser(
       username: String!
       email: String
+      password: String
       validationUrl: String
       userLocale: String
       displayName: String
+      avatar: Upload
+      removeAvatar: Boolean
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
   updateUserById(
       id: ID!
       email: String
+      password: String
       validationUrl: String
       userLocale: String
       displayName: String
+      avatar: Upload
       "group by path with leading slash"
       groups: [Groups]
   ): UserResult!
@@ -71,7 +103,6 @@ type Mutation {
       token: String!
       reCaptchaToken: String
   ): Boolean!
-  
 }
 
 type Query {
@@ -81,4 +112,7 @@ type Query {
   getDisplayNameById(
     id: ID!
   ): String!
+  getUserById(
+    id: ID!
+  ): UserExtended!
 }

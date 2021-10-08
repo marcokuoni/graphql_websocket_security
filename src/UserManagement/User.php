@@ -9,6 +9,7 @@ use Concrete\Core\Localization\Localization;
 use Doctrine\ORM\EntityManagerInterface;
 use Concrete\Core\User\UserInfoRepository;
 use Concrete\Core\Validator\String\EmailValidator;
+use Imagine\Image\Box;
 
 use C5GraphQl\User\StatusService;
 
@@ -23,7 +24,7 @@ class User
         $this->entityManager = $entityManager;
     }
 
-    public function create($email, $password, $username = null, $validationUrl = null, $userLocale = null, $groups = null)
+    public function create($email, $password, $username = null, $validationUrl = null, $userLocale = null, $avatar = null, $removeAvatar = null, $groups = null, $displayName = null)
     {
         $validationErrors = App::make('helper/validation/error');
 
@@ -61,10 +62,20 @@ class User
                     App::make(StatusService::class)->sendEmailValidation($newUser, $validationUrl, null);
                 }
 
+                $this->updateDisplayName($userInfo, $displayName);
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
+                $this->updateAvatar($userInfo, $avatar, $removeAvatar, $validationErrors);
 
-                $result['result'] = ['id' => $newUser->getUserID(), 'uEmail' => $newUser->getUserEmail(), 'uName' => $newUser->getUserName()];
+                $result['result'] = [
+                    'id' => $userInfo->getUserID(), 
+                    "uID" => $userInfo->getUserID(),
+                    'uName' => $userInfo->getUserName(),
+                    'uEmail' => $userInfo->getUserEmail(), 
+                    "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
+                    "uAvatar" => $userInfo->getUserAvatar()->getPath(),
+                ];
+
                 return $result;
             } else {
                 foreach ($validationErrors->getList() as $value) {
@@ -77,7 +88,7 @@ class User
         }
     }
 
-    public function update($userInfo, $email = null, $validationUrl = null, $userLocale = null, $groups = null, $displayName = null)
+    public function update($userInfo, $email = null, $password = null, $validationUrl = null, $userLocale = null, $avatar = null, $removeAvatar = null, $groups = null, $displayName = null)
     {
         $validationErrors = App::make('helper/validation/error');
 
@@ -103,11 +114,20 @@ class User
                     App::make(StatusService::class)->sendEmailValidation($userInfo, $validationUrl, null);
                 }
 
+                $this->updateDisplayName($userInfo, $displayName);
+                $this->updatePassword($userInfo, $password);
                 $this->updateLocale($entity, $userLocale, $validationErrors);
                 $this->updateGroups($userInfo, $groups, $validationErrors);
-                $this->updateDisplayName($userInfo, $displayName);
+                $this->updateAvatar($userInfo, $avatar, $removeAvatar, $validationErrors);
 
-                $result['result'] = ['id' => $userInfo->getUserID(), 'uEmail' => $userInfo->getUserEmail(), 'uName' => $userInfo->getUserName()];
+                $result['result'] = [
+                    'id' => $userInfo->getUserID(), 
+                    "uID" => $userInfo->getUserID(),
+                    'uName' => $userInfo->getUserName(),
+                    'uEmail' => $userInfo->getUserEmail(), 
+                    "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
+                    "uAvatar" => $userInfo->getUserAvatar()->getPath(),
+                ];
 
                 foreach ($validationErrors->getList() as $value) {
                     $result['validationErrors'][] = $value->getMessage();
@@ -184,6 +204,49 @@ class User
     {
         if (isset($displayName) && is_string($displayName) && ($displayName !== '')) {
             $userInfo->setAttribute("app_display_name", $displayName);
+        }
+    }
+    private function updatePassword(&$userInfo, &$password)
+    {
+        if (isset($password) && is_string($password) && ($password !== '')) {
+            $userInfo->changePassword($password);
+        }
+    }
+
+    private function updateAvatar(&$userInfo, &$avatarFile, &$removeAvatar, &$validationErrors)
+    {
+        if (isset($avatarFile) && (is_uploaded_file($avatarFile['tmp_name']))) {
+            $service = App::make("helper/validation/file");
+            if ($service->image($avatarFile['tmp_name'])) {
+                try {
+                    $image = \Image::open($avatarFile['tmp_name']);
+                    $image = $image->thumbnail(new Box(
+                                                   Config::get('concrete.icons.user_avatar.width'),
+                                                   Config::get('concrete.icons.user_avatar.height')
+                                               ));
+                    $userInfo->updateUserAvatar($image);
+                } catch (\Exception $error) {
+                    if ($this->app->make('config')->get('concrete.log.errors')) {
+                        $logger = $this->app->make('log/exceptions');
+                        $logger->emergency(
+                            t(
+                                "Exception Occurred: %s:%d %s (%d)\n",
+                                $error->getFile(),
+                                $error->getLine(),
+                                $error->getMessage(),
+                                $error->getCode()
+                            ),
+                            [$error]
+                        );
+                    }
+
+                    $validationErrors->add(t('Error while setting profile picture.'));
+                }
+            }
+        } 
+        if(!!$removeAvatar) {
+            $service = App::make('user/avatar');
+            $service->removeAvatar($userInfo);
         }
     }
 }
