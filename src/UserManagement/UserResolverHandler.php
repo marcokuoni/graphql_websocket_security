@@ -227,7 +227,7 @@ class UserResolverHandler
             $contextUsername = $context['user']->uName;
             $contextId = (int)$context['user']->uID;
 
-            if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername && $id !== $contextId) {
+            if ($contextUsername === '' && $contextId <= 0) {
                 Log::addInfo('Not allowed to get display name: ' . $contextUsername);
                 throw new UserManagementException('unknown');
             }
