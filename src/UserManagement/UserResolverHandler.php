@@ -249,7 +249,13 @@ class UserResolverHandler
                 throw new UserManagementException('user_not_found');
             }
 
-            return $userInfo->getAttribute("app_display_name");
+            try {
+                $displayName = ($userInfo->getAttribute("app_display_name") !== null) ? $userInfo->getAttribute("app_display_name") : '';
+            } catch (\Exception $e) {
+                Log::addInfo('Couldnt get display name: ' . $e->getMessage());
+            }
+            
+            return $displayName;
         } catch (\Exception $e) {
             Log::addInfo('Couldnt get display name: ' . $e->getMessage());
             throw new UserManagementException('unknown');
@@ -293,6 +299,12 @@ class UserResolverHandler
                 throw new UserManagementException('user_not_found');
             }
 
+            try {
+                $displayName = ($userInfo->getAttribute("app_display_name") !== null) ? $userInfo->getAttribute("app_display_name") : '';
+            } catch (\Exception $e) {
+                Log::addInfo('Couldnt get display name: ' . $e->getMessage());
+            }
+
             return [
                 'id' => $userInfo->getUserID(), 
                 "uID" => $userInfo->getUserID(),
@@ -300,7 +312,7 @@ class UserResolverHandler
                 'uEmail' => $userInfo->getUserEmail(), 
                 "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
                 "uAvatar" => $userInfo->getUserAvatar()->getPath(),
-                "displayName" => $userInfo->getAttribute("app_display_name"),
+                "displayName" => $displayName,
             ];
         } catch (\Exception $e) {
             Log::addInfo('Couldnt get display name: ' . $e->getMessage());
