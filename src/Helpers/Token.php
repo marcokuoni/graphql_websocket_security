@@ -180,6 +180,7 @@ class Token
         $returnUser = [];
         if ($user) {
             $userInfo = App::make(UserInfoRepository::class)->getByID((int) $user->getUserID());
+            $uo = $userInfo->getUserObject();
             $returnUser = [
                 "uID" => $user->getUserID(),
                 "uName" => $user->getUserName(),
@@ -187,9 +188,9 @@ class Token
                 "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
                 "uIsValidated" => $userInfo->isValidated(),
                 "uAvatar" => $userInfo->getUserAvatar()->getPath(),
-                "uGroupsPath" => array_map(function ($item) {
+                "uGroupsPath" => is_array($uo->getUserGroupObjects()) ? array_map(function ($item) {
                     return $item->getGroupPath();
-                }, $user->getUserGroupObjects()),
+                }, $uo->getUserGroupObjects()) : [],
             ];
         }
 

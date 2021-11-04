@@ -3,14 +3,19 @@
 namespace C5GraphQl\UserManagement;
 
 use Concrete\Core\Support\Facade\Application as App;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Concrete\Core\Support\Facade\Config;
 use Concrete5GraphqlWebsocket\Helpers\HasAccess;
 use Concrete\Core\User\UserInfoRepository;
 use function Siler\{array_get_arr};
 
 use C5GraphQl\UserManagement\User;
+use Concrete\Core\Entity\User\User as UserEntity;
 use C5GraphQl\User\StatusService;
 use Concrete\Core\Support\Facade\Log;
+use Doctrine\ORM\EntityManagerInterface;
+use Concrete\Core\User\Group\Group;
 
 class UserResolverHandler
 {
@@ -49,7 +54,7 @@ class UserResolverHandler
             $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
             $avatar = $args['avatar'] ? array_get_arr($args, 'avatar') : null;
-            $removeAvatar = (boolean) $args['removeAvatar'];
+            $removeAvatar = (bool) $args['removeAvatar'];
             $validationUrl = $sani->sanitizeURL($args['validationUrl']);
             $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
@@ -103,7 +108,7 @@ class UserResolverHandler
             $password = $sani->sanitizeString($args['password']);
             $userLocale = $sani->sanitizeString($args['userLocale']);
             $avatar = $args['avatar'] ? array_get_arr($args, 'avatar') : null;
-            $removeAvatar = (boolean) $args['removeAvatar'];
+            $removeAvatar = (bool) $args['removeAvatar'];
             $displayName = $sani->sanitizeString($args['displayName']);
             $groups = $args['groups'];
 
@@ -254,7 +259,7 @@ class UserResolverHandler
             } catch (\Exception $e) {
                 Log::addInfo('Couldnt get display name: ' . $e->getMessage());
             }
-            
+
             return $displayName;
         } catch (\Exception $e) {
             Log::addInfo('Couldnt get display name: ' . $e->getMessage());
@@ -284,7 +289,7 @@ class UserResolverHandler
             $contextId = (int)$context['user']->uID;
 
             if (!HasAccess::checkByGroup($context, $appManagerArray) && $username !== $contextUsername && $id !== $contextId) {
-                Log::addInfo('Not allowed to get display name: ' . $contextUsername);
+                Log::addInfo('Not allowed to get user: ' . $contextUsername);
                 throw new UserManagementException('unknown');
             }
             //check for existing user
@@ -305,17 +310,153 @@ class UserResolverHandler
                 Log::addInfo('Couldnt get display name: ' . $e->getMessage());
             }
 
+            $uo = $userInfo->getUserObject();
             return [
-                'id' => $userInfo->getUserID(), 
+                'id' => $userInfo->getUserID(),
                 "uID" => $userInfo->getUserID(),
                 'uName' => $userInfo->getUserName(),
-                'uEmail' => $userInfo->getUserEmail(), 
+                'uEmail' => $userInfo->getUserEmail(),
                 "uDefaultLanguage" => $userInfo->getUserDefaultLanguage(),
                 "uAvatar" => $userInfo->getUserAvatar()->getPath(),
                 "displayName" => $displayName,
+                "uGroupsPath" => is_array($uo->getUserGroupObjects()) ? array_map(function ($item) {
+                    return $item->getGroupPath();
+                }, $uo->getUserGroupObjects()) : [],
             ];
         } catch (\Exception $e) {
-            Log::addInfo('Couldnt get display name: ' . $e->getMessage());
+            Log::addInfo('Couldnt get user: ' . $e->getMessage());
+            throw new UserManagementException('unknown');
+        }
+    }
+
+    public function getUsers($root, $args, $context)
+    {
+        $ip_service = App::make('ip');
+        $appManagerArray = Config::get('concrete5_graphql_websocket_security::graphql_jwt.appManagerArray');
+
+        if (!is_array($appManagerArray)) {
+            $appManagerArray = ['/Administrators'];
+        }
+
+        if ($ip_service->isBlacklisted()) {
+            Log::addInfo('IP Blacklisted');
+            throw new \Exception($ip_service->getErrorMessage());
+        }
+
+        try {
+            $cursor = $args['cursor'];
+            $offset = (int) $cursor['offset'];
+            $pageSize = (int) $cursor['pageSize'];
+            $sorted = $cursor['sorted'];
+            $filtered = $cursor['filtered'];
+            $contextUsername = $context['user']->uName;
+
+            if (!HasAccess::checkByGroup($context, $appManagerArray)) {
+                Log::addInfo('Not allowed to get  users: ' . $contextUsername);
+                throw new UserManagementException('unknown');
+            }
+
+            $entityManager = App::make(EntityManagerInterface::class);
+            $nativeQuery = ' FROM Users u';
+            $whereQuery = '';
+            $orderQuery = '';
+            $rsm = new ResultSetMappingBuilder($entityManager);
+            $rsm->addRootEntityFromClassMetadata(UserEntity::class, 'u');
+
+            if ($filtered !== null && count($filtered) > 0) {
+                $counter = 1;
+                foreach ($filtered as $filter) {
+                    switch ($filter['id']) {
+                        case 'uID':
+                            if ($whereQuery === '') {
+                                $whereQuery .= ' WHERE ';
+                            } else {
+                                $whereQuery .= ' OR ';
+                            }
+                            $whereQuery .= 'u.uID = ' . $filter['value'];
+                            break;
+                        case 'uGroupsPath':
+                            $groups = [];
+                            $uGroupsPaths = explode(',', $filter['value']);
+                            foreach ($uGroupsPaths as $uGroupsPath) {
+                                $group = Group::getByPath($uGroupsPath);
+                                if ($group) {
+                                    $groups[] = $group->getGroupID();
+                                }
+                            }
+
+                            $nativeQuery .= ' left join UserGroups ug on ug.uID = u.uID';
+
+                            if ($whereQuery === '') {
+                                $whereQuery .= ' WHERE ';
+                            } else {
+                                $whereQuery .= ' AND ';
+                            }
+
+                            if (count($groups) > 0) {
+                                $whereQuery .= ' ug.gID IN (';
+                                $whereQuery .= join(', ', $groups);
+                                $whereQuery .= ')';
+                            } else {
+                                $whereQuery .= ' ug.gID is null';
+                            }
+                            break;
+                        default:
+                            if ($whereQuery === '') {
+                                $whereQuery .= ' WHERE ';
+                            } else {
+                                $whereQuery .= ' AND ';
+                            }
+                            $whereQuery .= 'u.' . $filter['id'] . ' LIKE %' . $filter['value'] . '%';
+                    }
+                    $counter++;
+                }
+            }
+
+            if ($sorted !== null && count($sorted) > 0) {
+                foreach ($sorted as $sort) {
+                    if ($orderQuery === '') {
+                        $orderQuery .= ' ORDER BY ';
+                    } else {
+                        $orderQuery .= ', ';
+                    }
+
+                    $orderQuery .= 'u.' . $sort['id'] . ' ' . ((bool) $sort['asc'] ? 'ASC' : 'DESC');
+                }
+            } else {
+                $orderQuery = ' ORDER BY u.uID';
+            }
+
+            $paginationQuery = ' LIMIT ' . $pageSize;
+            $paginationQuery .= ' OFFSET ' . $offset;
+
+
+            $query = $entityManager->createNativeQuery('SELECT *' . $nativeQuery . $whereQuery . $orderQuery . $paginationQuery, $rsm);
+            $users = $query->getResult();
+
+            $returnValue = array();
+            $returnValue['items'] = array();
+            foreach ($users as $user) {
+                $userInfo = $user->getUserInfoObject();
+                $uo = $userInfo->getUserObject();
+                $displayName = ($userInfo->getAttribute("app_display_name") !== null) ? $userInfo->getAttribute("app_display_name") : '';
+                $returnValue['items'][] = [
+                    'id' => $userInfo->getUserID(),
+                    "uID" => $userInfo->getUserID(),
+                    'uName' => $userInfo->getUserName(),
+                    'uEmail' => $userInfo->getUserEmail(),
+                    "uDefaultLanguage" => $uo->getUserDefaultLanguage(),
+                    "uAvatar" => $userInfo->getUserAvatar()->getPath(),
+                    "displayName" => $displayName,
+                    "uGroupsPath" => is_array($uo->getUserGroupObjects()) ? array_map(function ($item) {
+                        return $item->getGroupPath();
+                    }, $uo->getUserGroupObjects()) : [],
+                ];
+            }
+
+            return $returnValue;
+        } catch (\Exception $e) {
+            Log::addInfo('Couldnt get users: ' . $e->getMessage());
             throw new UserManagementException('unknown');
         }
     }

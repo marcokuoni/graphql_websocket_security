@@ -1,41 +1,42 @@
 scalar Upload
 
+enum Task {
+  ADD
+  REMOVE
+}
+
 interface UserBasic {
-    id: ID!,
-    uID: ID!,
-    uName: String!,
-    uEmail: String!,
-    uDefaultLanguage: String,
-    uAvatar: String!
+  id: ID!
+  uID: ID!
+  uName: String!
+  uEmail: String!
+  uDefaultLanguage: String
+  uAvatar: String!
 }
 
 type User implements UserBasic {
-    id: ID!,
-    uID: ID!,
-    uName: String!,
-    uEmail: String!,
-    uDefaultLanguage: String,
-    uAvatar: String!
+  id: ID!
+  uID: ID!
+  uName: String!
+  uEmail: String!
+  uDefaultLanguage: String
+  uAvatar: String!
 }
 
 type UserExtended implements UserBasic {
-    id: ID!,
-    uID: ID!,
-    uName: String!,
-    uEmail: String!,
-    uDefaultLanguage: String,
-    uAvatar: String!
-    displayName: String!
+  id: ID!
+  uID: ID!
+  uName: String!
+  uEmail: String!
+  uDefaultLanguage: String
+  uAvatar: String!
+  displayName: String!
+  uGroupsPath: [String]!
 }
 
 type UserResult {
-    result: User,
-    validationErrors: [String]!
-}
-
-enum Task {
-  ADD,
-  REMOVE
+  result: User
+  validationErrors: [String]!
 }
 
 input Groups {
@@ -43,76 +44,83 @@ input Groups {
   task: Task!
 }
 
+input FilterInput {
+  id: String!
+  value: String!
+}
+input SortInput {
+  id: String!
+  asc: Boolean!
+}
+input CursorInput {
+  offset: Int!
+  pageSize: Int!
+  sorted: [SortInput!]
+  filtered: [FilterInput!]
+}
+
 type Mutation {
   "Returns result (id, userName and email), a validationErrors array"
   createUser(
-      email: String!
-      password: String!
-      username: String
-      reCaptchaToken: String!
-      validationUrl: String
-      userLocale: String
-      displayName: String
-      avatar: Upload
-      removeAvatar: Boolean
-      "group by path with leading slash"
-      groups: [Groups]
+    email: String!
+    password: String!
+    username: String
+    reCaptchaToken: String!
+    validationUrl: String
+    userLocale: String
+    displayName: String
+    avatar: Upload
+    removeAvatar: Boolean
+    "group by path with leading slash"
+    groups: [Groups]
   ): UserResult!
 
   "Returns result (id, userName and email), a validationErrors array"
   updateUser(
-      username: String!
-      email: String
-      password: String
-      validationUrl: String
-      userLocale: String
-      displayName: String
-      avatar: Upload
-      removeAvatar: Boolean
-      "group by path with leading slash"
-      groups: [Groups]
+    username: String!
+    email: String
+    password: String
+    validationUrl: String
+    userLocale: String
+    displayName: String
+    avatar: Upload
+    removeAvatar: Boolean
+    "group by path with leading slash"
+    groups: [Groups]
   ): UserResult!
   updateUserById(
-      id: ID!
-      email: String
-      password: String
-      validationUrl: String
-      userLocale: String
-      displayName: String
-      avatar: Upload
-      "group by path with leading slash"
-      groups: [Groups]
+    id: ID!
+    email: String
+    password: String
+    validationUrl: String
+    userLocale: String
+    displayName: String
+    avatar: Upload
+    "group by path with leading slash"
+    groups: [Groups]
   ): UserResult!
 
-"sends a validation email to the emailaddress of the user"
+  "sends a validation email to the emailaddress of the user"
   sendValidationEmail(
-      uName: String!
-      reCaptchaToken: String!
-      validationUrl: String
-      template: String
+    uName: String!
+    reCaptchaToken: String!
+    validationUrl: String
+    template: String
   ): Boolean!
   sendValidationEmailById(
-      id: ID!
-      reCaptchaToken: String!
-      validationUrl: String
-      template: String
+    id: ID!
+    reCaptchaToken: String!
+    validationUrl: String
+    template: String
   ): Boolean!
 
   "validates the users emailaddress trough the token in the validation email"
-  validateEmail(
-      token: String!
-      reCaptchaToken: String
-  ): Boolean!
+  validateEmail(token: String!, reCaptchaToken: String): Boolean!
 }
 
 type Query {
-  getDisplayName(
-    username: String!
-  ): String!
-  getDisplayNameById(
-    id: ID!
-  ): String!
-  getUserById(
-    id: ID!
-  ): UserExtended!
+  getDisplayName(username: String!): String!
+  getDisplayNameById(id: ID!): String!
+  getUserById(id: ID!): UserExtended!
+  getUsers(cursor: CursorInput!): [UserExtended!]!
 }

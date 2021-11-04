@@ -22,7 +22,11 @@ class UserManagementResolver
             'getUserById' => function ($root, $args, $context) {
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->getUser($root, $args, $context);
-            }
+            },
+            'getUsers' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->getUsers($root, $args, $context);
+            },
         ];
 
         $mutationType = [
