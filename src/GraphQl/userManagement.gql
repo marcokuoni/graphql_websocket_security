@@ -122,5 +122,6 @@ type Query {
   getDisplayName(username: String!): String!
   getDisplayNameById(id: ID!): String!
   getUserById(id: ID!): UserExtended!
+  getUser(username: String!): UserExtended!
   getUsers(cursor: CursorInput!): [UserExtended!]!
 }

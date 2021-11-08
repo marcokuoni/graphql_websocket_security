@@ -435,12 +435,11 @@ class UserResolverHandler
             $users = $query->getResult();
 
             $returnValue = array();
-            $returnValue['items'] = array();
             foreach ($users as $user) {
                 $userInfo = $user->getUserInfoObject();
                 $uo = $userInfo->getUserObject();
                 $displayName = ($userInfo->getAttribute("app_display_name") !== null) ? $userInfo->getAttribute("app_display_name") : '';
-                $returnValue['items'][] = [
+                $returnValue[] = [
                     'id' => $userInfo->getUserID(),
                     "uID" => $userInfo->getUserID(),
                     'uName' => $userInfo->getUserName(),

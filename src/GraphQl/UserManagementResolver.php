@@ -19,6 +19,10 @@ class UserManagementResolver
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->getDisplayName($root, $args, $context);
             },
+            'getUser' => function ($root, $args, $context) {
+                $urh = App::make(UserResolverHandler::class);
+                return $urh->getUser($root, $args, $context);
+            },
             'getUserById' => function ($root, $args, $context) {
                 $urh = App::make(UserResolverHandler::class);
                 return $urh->getUser($root, $args, $context);
