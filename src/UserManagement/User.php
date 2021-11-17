@@ -177,20 +177,23 @@ class User
                 $currentUserGroupPaths[] = $currentGroup->getGroupPath();
             }
             foreach ($groups as $group) {
+                if ($group['task'] === 'REMOVE') {
+                    if (in_array($group['name'], $currentUserGroupPaths)) {
+                        $g = Group::getByPath($group['name']);
+                        if ($g) {
+                            $uo->exitGroup($g);
+                        } else {
+                            $validationErrors->add(t('New Group "%1$s" is not existing.', $group['name']));
+                        }
+                    }
+                }
+            }
+            foreach ($groups as $group) {
                 if ($group['task'] === 'ADD') {
                     if (!in_array($group['name'], $currentUserGroupPaths)) {
                         $g = Group::getByPath($group['name']);
                         if ($g) {
                             $uo->enterGroup($g);
-                        } else {
-                            $validationErrors->add(t('New Group "%1$s" is not existing.', $group['name']));
-                        }
-                    }
-                } else {
-                    if (in_array($group['name'], $currentUserGroupPaths)) {
-                        $g = Group::getByPath($group['name']);
-                        if ($g) {
-                            $uo->exitGroup($g);
                         } else {
                             $validationErrors->add(t('New Group "%1$s" is not existing.', $group['name']));
                         }
