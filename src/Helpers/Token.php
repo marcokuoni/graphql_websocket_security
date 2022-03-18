@@ -99,6 +99,7 @@ class Token
         $user = null;
 
         if (empty($token)) {
+            Log::addInfo(t('No JWT provided'));
             return false;
         }
 
