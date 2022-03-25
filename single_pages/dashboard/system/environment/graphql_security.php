@@ -33,7 +33,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
         <div>
             <p><?= t('The security packages adds different user Attributes') ?></p>
             <ul>
-                <li><?= t('Authorize secret, used to buil a new token out of a refresh token [Text]') ?></li>
+                <li><?= t('Authorize secret, used to build a new token out of a refresh token [Text]') ?></li>
                 <li><?= t('Authorize secret revoked, blocks the ability to create new tokens for a user [Boolean]') ?>
                 </li>
                 <li><?= t('Token not before, the tokens will just be valid after this time [Seconds]') ?></li>
@@ -58,27 +58,27 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
     <fieldset>
         <legend><?= t('GraphQL Security Settings') ?></legend>
         <div class="form-group">
-            <label class="launch-tooltip" for="auth_secret_key" data-placement="right" title="<?= t('Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated') ?>"><?= t('Secret Key') ?></label>
+            <label class="launch-tooltip" for="auth_secret_key" data-placement="right" title="<?= t('Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated. Placeholder for random key ca be copy/paste') ?>"><?= t('Secret Key') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('auth_secret_key', (string) $auth_secret_key !== '' ? (string) $auth_secret_key : t('You are not super user and not able to change or view the secret key')) ?>
+                    <?= $form->text('auth_secret_key', (string) $auth_secret_key !== '' ? (string) $auth_secret_key : t('You are not super user and not able to change or view the secret key'), ['placeholder' => bin2hex(random_bytes(32))]) ?>
                 </div>
             </div>
         </div>
         <div class="form-group">
-            <label class="launch-tooltip" for="auth_secret_key" data-placement="right" title="<?= t('Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated') ?>"><?= t('Refresh Secret Key') ?></label>
+            <label class="launch-tooltip" for="auth_secret_key" data-placement="right" title="<?= t('Secret Key for JWT signing, will be just visible for super user. If you change it, all token getting invalidated. Placeholder for random key ca be copy/paste') ?>"><?= t('Refresh Secret Key') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('auth_refresh_secret_key', (string) $auth_refresh_secret_key !== '' ? (string) $auth_refresh_secret_key : t('You are not super user and not able to change or view the secret key')) ?>
+                    <?= $form->text('auth_refresh_secret_key', (string) $auth_refresh_secret_key !== '' ? (string) $auth_refresh_secret_key : t('You are not super user and not able to change or view the secret key'), ['placeholder' => bin2hex(random_bytes(32))]) ?>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
-            <label class="launch-tooltip" for="auth_expire" data-placement="right" title="<?= t('A standard token will expire after how long? Default would be after 300 sec') ?>"><?= t('Token Expire [s]') ?></label>
+            <label class="launch-tooltip" for="auth_expire" data-placement="right" title="<?= t('A standard token will expire after how long? Default would be after 30 sec') ?>"><?= t('Token Expire [s]') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('auth_expire', (int) $auth_expire > 0 ? (int) $auth_expire : 300) ?>
+                    <?= $form->text('auth_expire', (int) $auth_expire > 0 ? (int) $auth_expire : '', ['placeholder' => 30]) ?>
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             <label class="launch-tooltip" for="auth_refresh_expire" data-placement="right" title="<?= t('A refresh token will expire after how long? Default would be after 7200 sec') ?>"><?= t('Refresh Token Expire [s]') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('auth_refresh_expire', (int) $auth_refresh_expire > 0 ? (int) $auth_refresh_expire : (7200)) ?>
+                    <?= $form->text('auth_refresh_expire', (int) $auth_refresh_expire > 0 ? (int) $auth_refresh_expire : '', ['placeholder' => 7200]) ?>
                 </div>
             </div>
         </div>
@@ -98,25 +98,25 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
             <label class="launch-tooltip" for="cookie_name" data-placement="right" title="<?= t('How is the refresh cookie named. Use a not obviously name') ?>"><?= t('Cookie Name') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('cookie_name', (string) $cookie_name !== '' ? (string) $cookie_name : 'mainApp') ?>
+                    <?= $form->text('cookie_name', (string) $cookie_name ?? '', ['placeholder' => '1dW4ed4cDe4dfdw45']) ?>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
-            <label class="launch-tooltip" for="cookie_lifetime" data-placement="right" title="<?= t('How long should the refresh token be valid? Default would be after 7200 sec') ?>"><?= t('Cookie Lifetime') ?></label>
+            <label class="launch-tooltip" for="cookie_domain" data-placement="right" title="<?= t('Defines the host to which the cookie will be sent') ?>"><?= t('Cookie Domain') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('cookie_lifetime', (string) $cookie_lifetime !== '' ? (int) $cookie_lifetime : (7200)) ?>
+                    <?= $form->text('cookie_domain', (string) $cookie_domain ?? '', ['placeholder' => $_SERVER['HTTP_HOST']]) ?>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
-            <label class="launch-tooltip" for="cookie_domain" data-placement="right" title="<?= t('The domain who can change the cookie') ?>"><?= t('Cookie Domain') ?></label>
+            <label class="launch-tooltip" for="cookie_path" data-placement="right" title="<?= t('Indicates the path that must exist in the requested URL for the browser to send the Cookie header') ?>"><?= t('Cookie Path') ?></label>
             <div class="form-group">
                 <div class="form-group">
-                    <?= $form->text('cookie_domain', (string) $cookie_domain !== '' ? (string) $cookie_domain : '') ?>
+                    <?= $form->text('cookie_path', (string) $cookie_path ?? '', ['placeholder' => '/refresh_token']) ?>
                 </div>
             </div>
         </div>

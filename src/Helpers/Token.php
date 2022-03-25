@@ -5,14 +5,14 @@ namespace Helpers;
 use Firebase\JWT\JWT;
 use Concrete\Core\Support\Facade\Application as App;
 use Concrete\Core\Error\UserMessageException;
-use Zend\Http\PhpEnvironment\Request;
+use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfoRepository;
 use Concrete\Core\Cookie\ResponseCookieJar;
 use Concrete\Core\Support\Facade\Log;
 
 class Token
 {
-    public function createAccessToken($user)
+    public function createAccessToken(User $user): ?string
     {
         $notBefore = $this->checkIfUserCanCreateToken($user);
         $token = $this->createToken($user, $notBefore, $this->getTokenExpiration());
@@ -27,14 +27,14 @@ class Token
         return !empty($token) ? $token : null;
     }
 
-    public function sendRefreshAccessToken($user)
+    public function sendRefreshAccessToken(User $user)
     {
         $refreshToken = $this->createRefreshToken($user);
 
         $config = App::make('config');
         $cookie_name = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_name');
         $cookie_path = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_path');
-        $cookie_lifetime = (int)  gmmktime() + $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_lifetime');
+        $cookie_lifetime = (int)  time() + $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_lifetime');
         $cookie_domain = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_domain');
         $cookie_secure = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure');
         $cookie_same_site = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_same_site');
@@ -64,7 +64,7 @@ class Token
         $cookie->clear($cookie_name);
     }
 
-    public function validateRefreshAccess()
+    public function validateRefreshAccess(): ?User
     {
         //for user
         $config = App::make('config');
@@ -78,7 +78,7 @@ class Token
         return $this->validateToken($refreshToken, true);
     }
 
-    private function createRefreshToken($user)
+    private function createRefreshToken(User $user): ?string
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $notBefore = $this->checkIfUserCanCreateToken($user);
@@ -93,7 +93,7 @@ class Token
         return !empty($token) ? $token : null;
     }
 
-    public function validateToken($token, $isRefresh = false)
+    public function validateToken(string $token, bool $isRefresh = false): ?User
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $user = null;
@@ -150,7 +150,7 @@ class Token
         return $user;
     }
 
-    private function checkIfUserCanCreateToken($user)
+    private function checkIfUserCanCreateToken(User $user): int
     {
         $notBefore = $this->getNotBefore($user);
 
@@ -159,16 +159,16 @@ class Token
             throw new \Exception(t('The JWT token cannot be issued for this user'));
         }
 
-        return $notBefore;
+        return (int) $notBefore;
     }
 
-    private function isSecure() {
+    private function isSecure(): bool {
         return
           (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
           || $_SERVER['SERVER_PORT'] == 443;
       }
 
-    private function createToken($user, $notBefore, $expiration)
+    private function createToken(User $user, int $notBefore, int $expiration)
     {
         $baseUrl = sprintf(
             "%s://%s",
@@ -197,7 +197,7 @@ class Token
 
         $token = [
             'iss'  => $baseUrl,
-            'iat'  => gmmktime(),
+            'iat'  => time(),
             'nbf'  => $notBefore,
             'exp'  => $expiration,
             'data' => [
@@ -213,12 +213,12 @@ class Token
         return $token;
     }
 
-    private function getNotBefore($user)
+    private function getNotBefore(User $user): int
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $notBefore = $authenticate->getNotBefore($user);
 
-        return $notBefore > 0 ? $notBefore : gmmktime();
+        return (int) $notBefore > 0 ? $notBefore : time();
     }
 
     /**
@@ -226,15 +226,15 @@ class Token
      *
      * @return mixed|string|null
      */
-    private function getTokenExpiration()
+    private function getTokenExpiration(): int
     {
         $config = App::make('config');
         $expirationConfig = (int) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_expire');
 
         if ($expirationConfig > 0) {
-            return gmmktime() + $expirationConfig;
+            return (int) time() + $expirationConfig;
         } else {
-            return gmmktime() + 300;
+            return (int) time() + 30;
         }
     }
 
@@ -243,15 +243,15 @@ class Token
      *
      * @return mixed|string|null
      */
-    private function getRefreshTokenExpiration()
+    private function getRefreshTokenExpiration(): int
     {
         $config = App::make('config');
         $expirationConfig = (int) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_expire');
 
         if ($expirationConfig > 0) {
-            return gmmktime() + $expirationConfig;
+            return (int) time() + $expirationConfig;
         } else {
-            return gmmktime() + (86400 * 365);
+            return (int) time() + (86400 * 365);
         }
     }
 
@@ -262,7 +262,7 @@ class Token
      *
      * @return mixed|string
      */
-    private function getUserJwtSecret($user)
+    private function getUserJwtSecret(User $user): string
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
 
@@ -286,7 +286,7 @@ class Token
          * @param string $secret  The GraphQL JWT Auth Secret associated with the user
          * @param int    $userId The ID of the user the secret is associated with
          */
-        return $secret;
+        return (string) $secret;
     }
 
     /**
@@ -296,10 +296,10 @@ class Token
      *
      * @return bool
      */
-    private function isJwtSecretRevoked($user)
+    private function isJwtSecretRevoked(User $user):bool
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
-        return $authenticate->getRevoked($user);
+        return $authenticate->getRevoked($user) ?? false;
     }
 
     /**
@@ -309,7 +309,7 @@ class Token
      *
      * @return string $secret The JWT User secret for the user.
      */
-    private function issueNewUserSecret($user)
+    private function issueNewUserSecret(User $user)
     {
         if (!$this->isJwtSecretRevoked($user)) {
             $authenticate = App::make(\Helpers\Authenticate::class);
@@ -326,7 +326,7 @@ class Token
      * @return mixed|null|string
      * @since 0.0.1
      */
-    private function getSecretKey()
+    private function getSecretKey(): string
     {
         $config = App::make('config');
         $secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_secret_key');
@@ -336,7 +336,7 @@ class Token
             Log::addInfo(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
             throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
-        return $secret_key;
+        return (string) $secret_key;
     }
 
     /**
@@ -347,7 +347,7 @@ class Token
      * @return mixed|null|string
      * @since 0.0.1
      */
-    private function getRefreshSecretKey()
+    private function getRefreshSecretKey(): string
     {
         $config = App::make('config');
         $secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key');
@@ -356,6 +356,6 @@ class Token
             Log::addInfo(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
             throw new UserMessageException(t('JWT Auth is not configured correctly. Please contact a site administrator.'));
         }
-        return $secret_key;
+        return (string) $secret_key;
     }
 }

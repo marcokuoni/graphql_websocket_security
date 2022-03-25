@@ -34,7 +34,7 @@ class Authenticate
      *
      * @return null|\Exception|User
      */
-    public function authenticateUser($username, $password)
+    public function authenticateUser(string $username, string $password): ?User
     {
         /** @var \Concrete\Core\Permission\IPService $ip_service */
         $ip_service = Core::make('ip');
@@ -63,7 +63,7 @@ class Authenticate
         return !empty($user) ? $user : null;
     }
 
-    public function deauthenticateUser()
+    public function deauthenticateUser(): bool
     {
         $currentUser = App::make(User::class);
 
@@ -84,7 +84,7 @@ class Authenticate
         return true;
     }
 
-    public function forgotPassword($username, $changePasswordUrl, $reCaptchaToken)
+    public function forgotPassword(string $username, string $changePasswordUrl, string $reCaptchaToken): array
     {
         $error = App::make('helper/validation/error');
 
@@ -156,7 +156,7 @@ class Authenticate
         }
     }
 
-    public function changePassword($password, $passwordConfirm, $token, $reCaptchaToken)
+    public function changePassword(string $password, string $passwordConfirm, string $token, string $reCaptchaToken): array
     {
         $e = Core::make('helper/validation/error');
 
@@ -201,7 +201,7 @@ class Authenticate
         return $e->getList();
     }
 
-    protected function handleFailedLogin(LoginService $loginService, $username, $password, UserException $e)
+    protected function handleFailedLogin(LoginService $loginService, string $username, string $password, UserException $e)
     {
         if ($e instanceof InvalidCredentialsException) {
             try {
@@ -225,7 +225,7 @@ class Authenticate
     /**
      * @param bool $hard
      */
-    public function invalidateSession($hard = true)
+    public function invalidateSession(bool $hard = true)
     {
         $app = App::getFacadeApplication();
         $session = $app['session'];
@@ -260,7 +260,7 @@ class Authenticate
         }
     }
 
-    public function setSecret($user, $secret)
+    public function setSecret(User $user, string $secret)
     {
         if ($user) {
             $userInfo = $user->getUserInfoObject();
@@ -268,7 +268,7 @@ class Authenticate
         }
     }
 
-    public function getSecret($user)
+    public function getSecret(User $user): string
     {
         $secret = null;
 
@@ -282,7 +282,7 @@ class Authenticate
         return $secret;
     }
 
-    public function setRevoked($user, $revoked)
+    public function setRevoked(User $user, bool $revoked): bool
     {
         if ($user) {
             // $up = new Permissions(UserInfo::getByID($user->getUserID()));
@@ -294,9 +294,10 @@ class Authenticate
                 return true;
             }
         }
+        return false;
     }
 
-    public function getRevoked($user)
+    public function getRevoked(User $user): bool
     {
         $revoked = null;
 
@@ -310,7 +311,7 @@ class Authenticate
         return isset($revoked) && true === $revoked ? true : false;
     }
 
-    public function setTokenExpires($user, $expires)
+    public function setTokenExpires(User $user, int $expires)
     {
         if ($user) {
             // $up = new Permissions(UserInfo::getByID($user->getUserID()));
@@ -322,7 +323,7 @@ class Authenticate
         }
     }
 
-    public function setRefreshTokenExpires($user, $expires)
+    public function setRefreshTokenExpires(User $user, int $expires)
     {
         if ($user) {
             // $up = new Permissions(UserInfo::getByID($user->getUserID()));
@@ -334,22 +335,26 @@ class Authenticate
         }
     }
 
-    public function getNotBefore($user)
+    public function getNotBefore(User $user): int
     {
         $notBefore = 0;
 
         if ($user) {
             if (0 !== (int) $user->getUserID()) {
                 $userInfo = $user->getUserInfoObject();
-                $notBefore = $userInfo->getAttribute("graphql_jwt_token_not_before");
+                $notBefore = (int) $userInfo->getAttribute("graphql_jwt_token_not_before");
             }
         }
 
         return $notBefore;
     }
 
-    public function getUserByToken($token)
+    public function getUserByToken(object $token): ?User
     {
-        return User::getByUserID($token->data->user->uID);
+        $user = null;
+        if ($token->data->user->uID > 0) {
+            $user = User::getByUserID($token->data->user->uID);
+        }
+        return $user;
     }
 }

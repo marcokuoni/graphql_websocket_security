@@ -33,6 +33,9 @@ class GraphqlSecurity extends DashboardPageController
         $cookie_domain = (String) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_domain');
         $this->set('cookie_domain', $cookie_domain);
 
+        $cookie_path = (String) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_path');
+        $this->set('cookie_path', $cookie_path);
+
         $cookie_secure = (Bool) $config->get('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_secure');
         $this->set('cookie_secure', $cookie_secure);
 
@@ -54,8 +57,9 @@ class GraphqlSecurity extends DashboardPageController
                 $auth_expire = (int) $this->post('auth_expire');
                 $auth_refresh_expire = (int) $this->post('auth_refresh_expire');
                 $cookie_name = (String) $this->post('cookie_name');
-                $cookie_lifetime = (Int) $this->post('cookie_lifetime');
+                $cookie_lifetime = $auth_refresh_expire;
                 $cookie_domain = (String) $this->post('cookie_domain');
+                $cookie_path = (String) $this->post('cookie_path');
 
                 $currentUser = App::make(User::class);
                 if ((int) $currentUser->getUserID() === 1) {
@@ -73,6 +77,10 @@ class GraphqlSecurity extends DashboardPageController
 
                 if (isset($cookie_name) && $cookie_name !== '') {
                     $config->save('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_name', $cookie_name);
+                }
+
+                if (isset($cookie_path) && $cookie_path !== '') {
+                    $config->save('concrete5_graphql_websocket_security::graphql_jwt.cookie.cookie_path', $cookie_path);
                 }
 
                 if ($cookie_lifetime > 0) {

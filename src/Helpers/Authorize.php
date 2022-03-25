@@ -28,7 +28,7 @@ class Authorize
      * @throws \Exception
      * @since 0.0.1
      */
-    public function loginAndGetToken($username, $password, $reCaptchaToken)
+    public function loginAndGetToken(string $username, string $password, string $reCaptchaToken): array
     {
         $accessToken = '';
         $nonce = '';
@@ -85,7 +85,7 @@ class Authorize
         return ['authError' => $authError, 'authToken' => $accessToken, 'nonce' => $token];
     }
 
-    public function checkNonce($user, $nonce, $u2SAPass, $reCaptchaToken)
+    public function checkNonce(string $user, string $nonce, string $u2SAPass, string $reCaptchaToken): array
     {
         $accessToken = '';
         $token = '';
@@ -155,7 +155,7 @@ class Authorize
         return ['error' => $error, 'authToken' => $accessToken, 'nonce' => $token];
     }
 
-    public function logout()
+    public function logout(): bool
     {
         $tokenHelper = App::make(\Helpers\Token::class);
         $tokenHelper->clearRefreshAccessToken();
@@ -165,12 +165,12 @@ class Authorize
         return true;
     }
 
-    public function logoutThroughRest()
+    public function logoutThroughRest(): JsonResponse
     {
-        return new JsonResponse($this->logout());
+        return new JsonResponse($this->logout(), JsonResponse::HTTP_UNAUTHORIZED);
     }
 
-    public function refreshToken()
+    public function refreshToken(): JsonResponse
     {
         try {
             $tokenHelper = App::make(\Helpers\Token::class);
@@ -180,13 +180,13 @@ class Authorize
                 $tokenHelper->sendRefreshAccessToken($user);
             } else {
                 $this->logoutThroughRest();
-                return new JsonResponse(['error' => 'Session Expired', 'authToken' => '']);
+                return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_GONE);
             }
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage(), 'authToken' => '']);
+            return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse(['error' => '', 'authToken' => $accessToken]);
+        return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_FOUND);
     }
 
 
@@ -198,7 +198,7 @@ class Authorize
      *
      * @return mixed|boolean|\Exception
      */
-    public function revokeUserSecret($user)
+    public function revokeUserSecret(User $user): bool
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         return $authenticate->setRevoked($user, true);
@@ -212,7 +212,7 @@ class Authorize
      *
      * @return mixed|boolean|\Exception
      */
-    public function unrevokeUserSecret($user)
+    public function unrevokeUserSecret(User $user): bool
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         return $authenticate->setRevoked($user, false);
