@@ -169,8 +169,17 @@ class Authorize
 
     public function logoutThroughRest(): JsonResponse
     {
+        $origins = Config::get('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins');
+        if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');
+            header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+            header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+            header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        }
+
         if (Request\method_is('options')) {
-            return new JsonResponse(null, JsonResponse::HTTP_OK);
+            return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
         } else {
             return new JsonResponse($this->logout(), JsonResponse::HTTP_OK);
         }
@@ -178,8 +187,17 @@ class Authorize
 
     public function refreshToken(): JsonResponse
     {
+        $origins = Config::get('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins');
+        if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 600');
+            header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+            header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+            header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        }
+
         if (Request\method_is('options')) {
-            return new JsonResponse(null, JsonResponse::HTTP_OK);
+            return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
         } else if (Request\method_is('post')) {
             try {
                 $tokenHelper = App::make(\Helpers\Token::class);
@@ -195,7 +213,7 @@ class Authorize
                 return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
             }
 
-            return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_FOUND);
+            return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_NO_CONTENT);
         }
         
         $this->logout();

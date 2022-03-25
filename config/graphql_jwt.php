@@ -15,6 +15,8 @@ return [
         'cookie_same_site' => 'Strict',  //declare if your cookie should be restricted to a first-party or same-site context
         'cookie_raw' => true  // the cookie is html encoded
     ],
+    'corsOrigins' => [
+    ],
     'adminArray' => [
         '/Administrators'
     ],
