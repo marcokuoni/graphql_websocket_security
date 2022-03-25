@@ -1,4 +1,5 @@
 <?php
+
 namespace Helpers;
 
 use Concrete\Core\Support\Facade\Application as App;
@@ -11,6 +12,7 @@ use TsaModels\Authenticator as Authenticator;
 use TsaModels\SettingsManager as SettingsManager;
 use Log;
 use Helpers\SecurityException;
+use Siler\Http\Request;
 
 class Authorize
 {
@@ -68,7 +70,7 @@ class Authorize
             if ($user->isError()) {
                 $error = $user->getError();
                 Log::addDebug($error);
-                if ($error === USER_NON_VALIDATED){
+                if ($error === USER_NON_VALIDATED) {
                     $ui = App::make('\Concrete\Core\User\UserInfoRepository')->getByEmail($username);
                     $authError = [
                         'type' => 'user_non_validated',
@@ -167,26 +169,37 @@ class Authorize
 
     public function logoutThroughRest(): JsonResponse
     {
-        return new JsonResponse($this->logout(), JsonResponse::HTTP_UNAUTHORIZED);
+        if (Request\method_is('options')) {
+            return new JsonResponse(null, JsonResponse::HTTP_OK);
+        } else {
+            return new JsonResponse($this->logout(), JsonResponse::HTTP_OK);
+        }
     }
 
     public function refreshToken(): JsonResponse
     {
-        try {
-            $tokenHelper = App::make(\Helpers\Token::class);
-            $user = $tokenHelper->validateRefreshAccess();
-            if ($user) {
-                $accessToken = $tokenHelper->createAccessToken($user);
-                $tokenHelper->sendRefreshAccessToken($user);
-            } else {
-                $this->logoutThroughRest();
-                return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
+        if (Request\method_is('options')) {
+            return new JsonResponse(null, JsonResponse::HTTP_OK);
+        } else if (Request\method_is('post')) {
+            try {
+                $tokenHelper = App::make(\Helpers\Token::class);
+                $user = $tokenHelper->validateRefreshAccess();
+                if ($user) {
+                    $accessToken = $tokenHelper->createAccessToken($user);
+                    $tokenHelper->sendRefreshAccessToken($user);
+                } else {
+                    $this->logout();
+                    return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
+                }
+            } catch (\Exception $e) {
+                return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
             }
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
-        }
 
-        return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_FOUND);
+            return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_FOUND);
+        }
+        
+        $this->logout();
+        return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
     }
 
 
