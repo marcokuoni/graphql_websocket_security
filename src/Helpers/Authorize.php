@@ -13,6 +13,7 @@ use TsaModels\SettingsManager as SettingsManager;
 use Log;
 use Helpers\SecurityException;
 use Siler\Http\Request;
+use Concrete5GraphqlWebsocket\Helpers\Cors;
 
 class Authorize
 {
@@ -169,14 +170,7 @@ class Authorize
 
     public function logoutThroughRest(): JsonResponse
     {
-        $origins = Config::get('concrete5_graphql_websocket::graphql.corsOrigins');
-        if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');
-            header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
-            header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
-            header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
+        Cors::setCors();
 
         if (Request\method_is('options')) {
             return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
@@ -187,14 +181,7 @@ class Authorize
 
     public function refreshToken(): JsonResponse
     {
-        $origins = Config::get('concrete5_graphql_websocket::graphql.corsOrigins');
-        if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 600');
-            header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
-            header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
-            header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
+        Cors::setCors();
 
         if (Request\method_is('options')) {
             return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
