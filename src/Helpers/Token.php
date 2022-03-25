@@ -93,7 +93,7 @@ class Token
         return !empty($token) ? $token : null;
     }
 
-    public function validateToken(string $token, bool $isRefresh = false): ?User
+    public function validateToken(?string $token, bool $isRefresh = false): ?User
     {
         $authenticate = App::make(\Helpers\Authenticate::class);
         $user = null;
