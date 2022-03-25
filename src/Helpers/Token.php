@@ -100,7 +100,7 @@ class Token
 
         if (empty($token)) {
             Log::addInfo(t('No JWT provided'));
-            return false;
+            return null;
         }
 
         $secret = '';
