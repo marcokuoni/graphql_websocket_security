@@ -180,10 +180,10 @@ class Authorize
                 $tokenHelper->sendRefreshAccessToken($user);
             } else {
                 $this->logoutThroughRest();
-                return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_GONE);
+                return new JsonResponse(['error' => 'Session Expired', 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
             }
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => $e->getMessage(), 'authToken' => ''], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
         return new JsonResponse(['error' => '', 'authToken' => $accessToken], JsonResponse::HTTP_FOUND);

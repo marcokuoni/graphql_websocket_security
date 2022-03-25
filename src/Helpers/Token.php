@@ -9,6 +9,7 @@ use Concrete\Core\User\User;
 use Concrete\Core\User\UserInfoRepository;
 use Concrete\Core\Cookie\ResponseCookieJar;
 use Concrete\Core\Support\Facade\Log;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class Token
 {
@@ -140,10 +141,10 @@ class Token
         } catch (\Exception $error) {
             if ($error->getMessage() === 'Expired token') {
                 Log::addInfo(t('Expired token'));
-                throw new UserMessageException(t('Expired token'), 401);
+                throw new UserMessageException(t('Expired token'), JsonResponse::HTTP_UNAUTHORIZED);
             } else {
                 Log::addInfo(t('The JWT Token is invalid'));
-                throw new UserMessageException(t('The JWT Token is invalid'), 401);
+                throw new UserMessageException(t('The JWT Token is invalid'), JsonResponse::HTTP_UNAUTHORIZED);
             }
         }
 
