@@ -17,9 +17,6 @@ class GraphqlSecurity extends DashboardPageController
             $this->set('auth_secret_key', $auth_secret_key);
             $auth_refresh_secret_key = (string) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key');
             $this->set('auth_refresh_secret_key', $auth_refresh_secret_key);
-
-            $corsOrigins = (string) implode(', ', $config->get('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins'));
-            $this->set('corsOrigins', $corsOrigins);
         }
         $auth_expire = (int) $config->get('concrete5_graphql_websocket_security::graphql_jwt.auth_expire');
         $this->set('auth_expire', $auth_expire);
@@ -69,10 +66,6 @@ class GraphqlSecurity extends DashboardPageController
                 if ((int) $currentUser->getUserID() === 1) {
                     $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_secret_key', (string) $this->post('auth_secret_key'));
                     $config->save('concrete5_graphql_websocket_security::graphql_jwt.auth_refresh_secret_key', (string) $this->post('auth_refresh_secret_key'));
-
-                    if (isset($corsOrigins) && $corsOrigins !== '') {
-                        $config->save('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins', explode(',', $corsOrigins));
-                    }
                 }
 
                 if ($auth_expire > 0) {

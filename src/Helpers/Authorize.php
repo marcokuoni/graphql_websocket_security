@@ -169,7 +169,7 @@ class Authorize
 
     public function logoutThroughRest(): JsonResponse
     {
-        $origins = Config::get('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins');
+        $origins = Config::get('concrete5_graphql_websocket::graphql.corsOrigins');
         if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
             header('Access-Control-Allow-Credentials: true');
             header('Access-Control-Max-Age: 86400');
@@ -187,7 +187,7 @@ class Authorize
 
     public function refreshToken(): JsonResponse
     {
-        $origins = Config::get('concrete5_graphql_websocket_security::graphql_jwt.corsOrigins');
+        $origins = Config::get('concrete5_graphql_websocket::graphql.corsOrigins');
         if(in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
             header('Access-Control-Allow-Credentials: true');
             header('Access-Control-Max-Age: 600');

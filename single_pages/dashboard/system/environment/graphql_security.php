@@ -73,14 +73,6 @@ $dh = App::make(\Concrete\Core\Localization\Service\Date::class);
                 </div>
             </div>
         </div>
-        <div class="form-group">
-            <label class="launch-tooltip" for="corsOrigins" data-placement="right" title="<?= t('Allowed cors origin') ?>"><?= t('CORS Origins') ?></label>
-            <div class="form-group">
-                <div class="form-group">
-                    <?= $form->text('corsOrigins', (string) $corsOrigins !== '' ? (string) $corsOrigins : t('You are not super user and not able to change or view the secret key'), ['placeholder' => $_SERVER['HTTP_ORIGIN']]) ?>
-                </div>
-            </div>
-        </div>
 
         <div class="form-group">
             <label class="launch-tooltip" for="auth_expire" data-placement="right" title="<?= t('A standard token will expire after how long? Default would be after 30 sec') ?>"><?= t('Token Expire [s]') ?></label>
